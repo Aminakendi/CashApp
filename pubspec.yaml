@@ -1,0 +1,37 @@
+name: mpesa_tracker
+description: A personal M-Pesa-Aware Expense & Savings Tracker.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.4.9
+  drift: ^2.14.0
+  sqlite3_flutter_libs: ^0.5.18
+  sqlcipher_flutter_libs: any
+  flutter_secure_storage: ^9.0.0
+  flutter_sms_inbox: any
+  telephony: ^0.2.0
+  fl_chart: ^0.66.0
+  flutter_local_notifications: ^17.0.0
+  permission_handler: ^11.2.0
+  intl: ^0.19.0
+  workmanager: ^0.5.2
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.2
+  path: ^1.9.0
+  sqlite3: ^2.4.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  drift_dev: ^2.14.0
+  build_runner: ^2.4.8
+
+flutter:
+  uses-material-design: true
