@@ -101,21 +101,8 @@ class SmsIngestionService {
     ParsedTransaction tx,
   ) async {
     try {
-      final rules = await db.select(db.categoryRules).get();
-      final counterpartyUpper = tx.counterparty?.toUpperCase() ?? '';
-
-      // 1. Check custom user rules
-      for (final rule in rules) {
-        if (counterpartyUpper.contains(rule.pattern.toUpperCase())) {
-          return rule.categoryId;
-        }
-      }
-
-      // 2. Fetch seeded categories to map by name
       final categories = await db.select(db.categories).get();
       final categoryMap = {for (var c in categories) c.name.toLowerCase(): c.id};
-
-      // Helper to find category by any matching prefix/keyword
       int? findCat(List<String> candidates) {
         for (final cand in candidates) {
           for (final entry in categoryMap.entries) {
@@ -127,7 +114,13 @@ class SmsIngestionService {
         return null;
       }
 
-      // 3. Subtype-based categorization
+      // 1. Check text-based rules using counterparty
+      final textBasedCategory = await resolveCategoryForText(db, tx.counterparty ?? '');
+      if (textBasedCategory != null) {
+        return textBasedCategory;
+      }
+
+      // 2. Subtype-based categorization
       if (tx.subtype == MpesaSubtype.airtime) {
         return findCat(['airtime', 'utilities']);
       }
@@ -138,51 +131,121 @@ class SmsIngestionService {
         return findCat(['savings', 'investment', 'other']);
       }
 
-      // 4. Keyword heuristic matching
-      if (counterpartyUpper.contains('NAIVAS') ||
-          counterpartyUpper.contains('CARREFOUR') ||
-          counterpartyUpper.contains('QUICKMART') ||
-          counterpartyUpper.contains('CHANDARANA') ||
-          counterpartyUpper.contains('CLEANSHELF') ||
-          counterpartyUpper.contains('SUPERMARKET') ||
-          counterpartyUpper.contains('MART')) {
-        return findCat(['shopping', 'food']);
-      }
-
-      if (counterpartyUpper.contains('KPLC') ||
-          counterpartyUpper.contains('KENYA POWER') ||
-          counterpartyUpper.contains('ZUKU') ||
-          counterpartyUpper.contains('SAFARICOM HOME') ||
-          counterpartyUpper.contains('NAIROBI WATER') ||
-          counterpartyUpper.contains('WATER')) {
-        return findCat(['utilities', 'bills']);
-      }
-
-      if (counterpartyUpper.contains('UBER') ||
-          counterpartyUpper.contains('BOLT') ||
-          counterpartyUpper.contains('LITTLE') ||
-          counterpartyUpper.contains('TOTAL') ||
-          counterpartyUpper.contains('RUBIS') ||
-          counterpartyUpper.contains('SHELL') ||
-          counterpartyUpper.contains('PETROL') ||
-          counterpartyUpper.contains('MATATU')) {
-        return findCat(['transport']);
-      }
-
-      if (counterpartyUpper.contains('KFC') ||
-          counterpartyUpper.contains('JAVA') ||
-          counterpartyUpper.contains('ARTCAFFE') ||
-          counterpartyUpper.contains('DOMINOS') ||
-          counterpartyUpper.contains('PIZZA INN') ||
-          counterpartyUpper.contains('RESTAURANT') ||
-          counterpartyUpper.contains('CAFE') ||
-          counterpartyUpper.contains('FOOD')) {
-        return findCat(['food']);
-      }
-
       return categoryMap['other'];
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Exposed for manual entry screens to auto-suggest categories based on text input.
+  static Future<int?> resolveCategoryForText(
+    AppDatabase db,
+    String text,
+  ) async {
+    if (text.isEmpty) return null;
+    try {
+      final rules = await db.select(db.categoryRules).get();
+      final textUpper = text.toUpperCase();
+
+      for (final rule in rules) {
+        if (textUpper.contains(rule.pattern.toUpperCase())) {
+          return rule.categoryId;
+        }
+      }
+
+      final categories = await db.select(db.categories).get();
+      final categoryMap = {for (var c in categories) c.name.toLowerCase(): c.id};
+
+      int? findCat(List<String> candidates) {
+        for (final cand in candidates) {
+          for (final entry in categoryMap.entries) {
+            if (entry.key.contains(cand.toLowerCase())) {
+              return entry.value;
+            }
+          }
+        }
+        return null;
+      }
+
+      if (textUpper.contains('NAIVAS') ||
+          textUpper.contains('CARREFOUR') ||
+          textUpper.contains('QUICKMART') ||
+          textUpper.contains('CHANDARANA') ||
+          textUpper.contains('CLEANSHELF') ||
+          textUpper.contains('SUPERMARKET') ||
+          textUpper.contains('MART')) {
+        return findCat(['shopping', 'food']);
+      }
+
+      if (textUpper.contains('KPLC') ||
+          textUpper.contains('KENYA POWER') ||
+          textUpper.contains('ZUKU') ||
+          textUpper.contains('SAFARICOM HOME') ||
+          textUpper.contains('NAIROBI WATER') ||
+          textUpper.contains('WATER')) {
+        return findCat(['utilities', 'bills']);
+      }
+
+      if (textUpper.contains('UBER') ||
+          textUpper.contains('BOLT') ||
+          textUpper.contains('LITTLE') ||
+          textUpper.contains('TOTAL') ||
+          textUpper.contains('RUBIS') ||
+          textUpper.contains('SHELL') ||
+          textUpper.contains('PETROL') ||
+          textUpper.contains('MATATU')) {
+        return findCat(['transport']);
+      }
+
+      if (textUpper.contains('KFC') ||
+          textUpper.contains('JAVA') ||
+          textUpper.contains('ARTCAFFE') ||
+          textUpper.contains('DOMINOS') ||
+          textUpper.contains('PIZZA INN') ||
+          textUpper.contains('RESTAURANT') ||
+          textUpper.contains('CAFE') ||
+          textUpper.contains('FOOD')) {
+        return findCat(['food']);
+      }
+
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Records a new CategoryRule when a user manually categorizes a transaction,
+  /// so the app learns this mapping for future auto-suggestions.
+  static Future<void> learnCategoryRule(
+    AppDatabase db,
+    String counterparty,
+    int categoryId,
+  ) async {
+    if (counterparty.isEmpty) return;
+    
+    // Convert to upper case for consistency
+    final pattern = counterparty.toUpperCase();
+    
+    // Check if a rule already exists for this exact pattern
+    final existing = await (db.select(db.categoryRules)
+          ..where((r) => r.pattern.equals(pattern)))
+        .getSingleOrNull();
+        
+    if (existing != null) {
+      if (existing.categoryId != categoryId) {
+        // Update existing rule if the category changed
+        await db.update(db.categoryRules).replace(
+          existing.copyWith(categoryId: categoryId),
+        );
+      }
+    } else {
+      // Insert new rule
+      await db.into(db.categoryRules).insert(
+        CategoryRulesCompanion.insert(
+          pattern: pattern,
+          categoryId: categoryId,
+        ),
+      );
     }
   }
 }

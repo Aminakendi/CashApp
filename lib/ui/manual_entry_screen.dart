@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/db_provider.dart';
 import '../database/database.dart';
 import 'package:drift/drift.dart' as drift;
+import '../services/sms_ingestion_service.dart';
 
 class ManualEntryScreen extends ConsumerStatefulWidget {
   const ManualEntryScreen({super.key});
@@ -14,6 +15,7 @@ class ManualEntryScreen extends ConsumerStatefulWidget {
 
 class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
   final _amountController = TextEditingController();
+  final _counterpartyController = TextEditingController();
   final _noteController = TextEditingController();
   
   DateTime _selectedDate = DateTime.now();
@@ -25,6 +27,28 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
   void initState() {
     super.initState();
     _loadCategories();
+    _counterpartyController.addListener(_onCounterpartyChanged);
+  }
+
+  @override
+  void dispose() {
+    _counterpartyController.dispose();
+    _noteController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onCounterpartyChanged() async {
+    final text = _counterpartyController.text;
+    if (text.length > 2) {
+      final db = ref.read(dbProvider);
+      final suggestedId = await SmsIngestionService.resolveCategoryForText(db, text);
+      if (suggestedId != null && mounted && _selectedCategoryId != suggestedId) {
+        setState(() {
+          _selectedCategoryId = suggestedId;
+        });
+      }
+    }
   }
 
   Future<void> _loadCategories() async {
@@ -57,6 +81,7 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
     }
 
     final db = ref.read(dbProvider);
+    final counterparty = _counterpartyController.text.trim();
     
     await db.into(db.transactions).insert(
       TransactionsCompanion.insert(
@@ -64,11 +89,16 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
         type: 'expense',
         source: 'manual',
         categoryId: drift.Value(_selectedCategoryId),
+        counterparty: drift.Value(counterparty.isEmpty ? null : counterparty),
         note: drift.Value(_noteController.text.isEmpty ? null : _noteController.text),
         paymentMethod: _paymentMethod,
         timestamp: _selectedDate,
       ),
     );
+
+    if (counterparty.isNotEmpty && _selectedCategoryId != null) {
+      await SmsIngestionService.learnCategoryRule(db, counterparty, _selectedCategoryId!);
+    }
 
     if (mounted) {
       Navigator.pop(context);
@@ -120,6 +150,14 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
                       DropdownMenuItem(value: 'mpesa', child: Text('M-Pesa (Manual)')),
                     ],
                     onChanged: (val) => setState(() => _paymentMethod = val!),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _counterpartyController,
+                    decoration: const InputDecoration(
+                      labelText: 'Payee / Merchant',
+                      hintText: 'e.g. Uber, Naivas',
+                    ),
                   ),
                   const SizedBox(height: 20),
                   TextField(

@@ -6,33 +6,29 @@ import 'package:workmanager/workmanager.dart';
 
 import '../database/database.dart';
 import 'sms_ingestion_service.dart';
+import 'sms_staging_service.dart';
 import 'sync_state_service.dart';
 
 /// Top-level background message handler for telephony (Layer 1).
 /// Must be top-level and annotated with @pragma('vm:entry-point') so Flutter AOT doesn't tree-shake it.
 @pragma('vm:entry-point')
 void mpesaBackgroundMessageHandler(tel.SmsMessage message) async {
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+  } catch (e) {
+    developer.log('Layer 1 Init Error (MissingPluginException likely): $e', name: 'SmsSyncManager');
+    return;
+  }
   developer.log('Layer 1 Background SMS received: ${message.body}', name: 'SmsSyncManager');
 
   final body = message.body;
   if (body == null || body.isEmpty) return;
 
-  AppDatabase? db;
   try {
-    db = AppDatabase();
-    await SmsIngestionService.processSingleSms(db, body);
-    await SyncStateService.setLastSyncedAt(DateTime.now());
+    await SmsStagingService.queueMessage(body);
+    developer.log('Successfully queued SMS in staging', name: 'SmsSyncManager');
   } catch (e, stack) {
-    developer.log('Error processing background SMS: $e', name: 'SmsSyncManager', error: e, stackTrace: stack);
-    // Route to unparsed store if possible
-    if (db != null) {
-      try {
-        await SmsIngestionService.processSingleSms(db, body);
-      } catch (_) {}
-    }
-  } finally {
-    await db?.close();
+    developer.log('Error queueing background SMS: $e', name: 'SmsSyncManager', error: e, stackTrace: stack);
   }
 }
 
@@ -117,6 +113,19 @@ class SmsSyncManager {
   /// Queries messages newer than lastSyncedAt minus a 5-minute safety margin.
   static Future<int> performDifferentialSync(AppDatabase db) async {
     try {
+      // 1. Drain the background staging queue first
+      final stagedMessages = await SmsStagingService.drainQueue();
+      if (stagedMessages.isNotEmpty) {
+        developer.log('Draining ${stagedMessages.length} messages from staging queue', name: 'SmsSyncManager');
+        final contents = stagedMessages.map((m) => m.content).toList();
+        
+        // This throws if DB insert completely fails.
+        await SmsIngestionService.processBatchSms(db, contents);
+        
+        // ONLY if the batch succeeded, delete the files
+        await SmsStagingService.deleteStagedFiles(stagedMessages);
+      }
+
       final lastSyncedAt = await SyncStateService.getLastSyncedAt();
       final query = inbox.SmsQuery();
 

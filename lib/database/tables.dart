@@ -11,6 +11,7 @@ class Transactions extends Table {
   TextColumn get counterparty => text().nullable()();
   IntColumn get categoryId => integer().nullable().references(Categories, #id)();
   TextColumn get note => text().nullable()();
+  TextColumn get notes2 => text().nullable()(); // Added for v2 migration testing
   TextColumn get paymentMethod => text()(); // mpesa, cash, card
   DateTimeColumn get timestamp => dateTime()();
   TextColumn get rawSmsText => text().nullable()();
