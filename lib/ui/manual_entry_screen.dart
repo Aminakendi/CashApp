@@ -17,7 +17,7 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
   final _amountController = TextEditingController();
   final _counterpartyController = TextEditingController();
   final _noteController = TextEditingController();
-  
+
   DateTime _selectedDate = DateTime.now();
   String _paymentMethod = 'cash';
   int? _selectedCategoryId;
@@ -42,8 +42,11 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
     final text = _counterpartyController.text;
     if (text.length > 2) {
       final db = ref.read(dbProvider);
-      final suggestedId = await SmsIngestionService.resolveCategoryForText(db, text);
-      if (suggestedId != null && mounted && _selectedCategoryId != suggestedId) {
+      final suggestedId =
+          await SmsIngestionService.resolveCategoryForText(db, text);
+      if (suggestedId != null &&
+          mounted &&
+          _selectedCategoryId != suggestedId) {
         setState(() {
           _selectedCategoryId = suggestedId;
         });
@@ -65,7 +68,7 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
   Future<void> _saveTransaction() async {
     final amountText = _amountController.text.replaceAll(',', '');
     final amount = double.tryParse(amountText);
-    
+
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid amount')),
@@ -82,22 +85,25 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
 
     final db = ref.read(dbProvider);
     final counterparty = _counterpartyController.text.trim();
-    
+
     await db.into(db.transactions).insert(
-      TransactionsCompanion.insert(
-        amount: amount,
-        type: 'expense',
-        source: 'manual',
-        categoryId: drift.Value(_selectedCategoryId),
-        counterparty: drift.Value(counterparty.isEmpty ? null : counterparty),
-        note: drift.Value(_noteController.text.isEmpty ? null : _noteController.text),
-        paymentMethod: _paymentMethod,
-        timestamp: _selectedDate,
-      ),
-    );
+          TransactionsCompanion.insert(
+            amount: amount,
+            type: 'expense',
+            source: 'manual',
+            categoryId: drift.Value(_selectedCategoryId),
+            counterparty:
+                drift.Value(counterparty.isEmpty ? null : counterparty),
+            note: drift.Value(
+                _noteController.text.isEmpty ? null : _noteController.text),
+            paymentMethod: _paymentMethod,
+            timestamp: _selectedDate,
+          ),
+        );
 
     if (counterparty.isNotEmpty && _selectedCategoryId != null) {
-      await SmsIngestionService.learnCategoryRule(db, counterparty, _selectedCategoryId!);
+      await SmsIngestionService.learnCategoryRule(
+          db, counterparty, _selectedCategoryId!);
     }
 
     if (mounted) {
@@ -113,7 +119,7 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: _categories.isEmpty 
+      body: _categories.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
@@ -121,16 +127,18 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
                 children: [
                   TextField(
                     controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Amount',
                       prefixText: 'Ksh ',
                     ),
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 20),
                   DropdownButtonFormField<int>(
-                    value: _selectedCategoryId,
+                    initialValue: _selectedCategoryId,
                     decoration: const InputDecoration(labelText: 'Category'),
                     items: _categories.map((cat) {
                       return DropdownMenuItem<int>(
@@ -138,16 +146,19 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
                         child: Text(cat.name),
                       );
                     }).toList(),
-                    onChanged: (val) => setState(() => _selectedCategoryId = val),
+                    onChanged: (val) =>
+                        setState(() => _selectedCategoryId = val),
                   ),
                   const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
-                    value: _paymentMethod,
-                    decoration: const InputDecoration(labelText: 'Payment Method'),
+                    initialValue: _paymentMethod,
+                    decoration:
+                        const InputDecoration(labelText: 'Payment Method'),
                     items: const [
                       DropdownMenuItem(value: 'cash', child: Text('Cash')),
                       DropdownMenuItem(value: 'card', child: Text('Card')),
-                      DropdownMenuItem(value: 'mpesa', child: Text('M-Pesa (Manual)')),
+                      DropdownMenuItem(
+                          value: 'mpesa', child: Text('M-Pesa (Manual)')),
                     ],
                     onChanged: (val) => setState(() => _paymentMethod = val!),
                   ),
@@ -162,7 +173,8 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
                   const SizedBox(height: 20),
                   TextField(
                     controller: _noteController,
-                    decoration: const InputDecoration(labelText: 'Note (Optional)'),
+                    decoration:
+                        const InputDecoration(labelText: 'Note (Optional)'),
                   ),
                   const SizedBox(height: 20),
                   ListTile(
@@ -191,7 +203,8 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Save Expense', style: TextStyle(fontSize: 16)),
+                    child: const Text('Save Expense',
+                        style: TextStyle(fontSize: 16)),
                   ),
                 ],
               ),

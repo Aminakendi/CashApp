@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:mpesa_tracker/database/database.dart';
@@ -39,7 +38,7 @@ void main() {
         raw_sms_text TEXT
       );
     ''');
-    
+
     // Insert a mock v1 transaction
     final timestamp = DateTime(2026, 1, 1).millisecondsSinceEpoch ~/ 1000;
     db1.execute('''
@@ -50,16 +49,16 @@ void main() {
 
     // 2. Reopen with v2 schema (Drift will automatically detect user_version=1 and run onUpgrade to schemaVersion=2)
     final db2 = AppDatabase.forTesting(NativeDatabase(dbFile));
-    
+
     // Ensure database is opened and migration completes by running a query
     final txs = await db2.select(db2.transactions).get();
-    
+
     // Verify data survived and new schema column is present
     expect(txs.length, 1);
     expect(txs.first.mpesaTransactionCode, 'TEST12345');
     // Ensure the new v2 column exists and is nullable (null for existing v1 rows)
     expect(txs.first.notes2, null);
-    
+
     await db2.close();
     if (dbFile.existsSync()) dbFile.deleteSync();
   });

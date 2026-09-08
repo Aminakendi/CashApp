@@ -15,7 +15,8 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  Future<void> _showEditCategoryDialog(BuildContext context, Transaction tx, AppDatabase db) async {
+  Future<void> _showEditCategoryDialog(
+      BuildContext context, TransactionEntry tx, AppDatabase db) async {
     final categories = await db.select(db.categories).get();
     int? selectedId = tx.categoryId;
 
@@ -24,51 +25,51 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     await showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Edit Category'),
-              content: DropdownButtonFormField<int>(
-                value: selectedId,
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: categories.map((cat) {
-                  return DropdownMenuItem<int>(
-                    value: cat.id,
-                    child: Text(cat.name),
-                  );
-                }).toList(),
-                onChanged: (val) => setState(() => selectedId = val),
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Edit Category'),
+            content: DropdownButtonFormField<int>(
+              initialValue: selectedId,
+              decoration: const InputDecoration(labelText: 'Category'),
+              items: categories.map((cat) {
+                return DropdownMenuItem<int>(
+                  value: cat.id,
+                  child: Text(cat.name),
+                );
+              }).toList(),
+              onChanged: (val) => setState(() => selectedId = val),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (selectedId != null) {
-                      // Targeted column update to avoid clobbering concurrent background edits
-                      await (db.update(db.transactions)
-                            ..where((t) => t.id.equals(tx.id)))
-                          .write(TransactionsCompanion(categoryId: Value(selectedId)));
-                      
-                      // Active learning: close the loop!
-                      if (tx.counterparty != null && tx.counterparty!.isNotEmpty) {
-                        await SmsIngestionService.learnCategoryRule(
-                          db,
-                          tx.counterparty!,
-                          selectedId!,
-                        );
-                      }
+              ElevatedButton(
+                onPressed: () async {
+                  if (selectedId != null) {
+                    // Targeted column update to avoid clobbering concurrent background edits
+                    await (db.update(db.transactions)
+                          ..where((t) => t.id.equals(tx.id)))
+                        .write(TransactionsCompanion(
+                            categoryId: Value(selectedId)));
+
+                    // Active learning: close the loop!
+                    if (tx.counterparty != null &&
+                        tx.counterparty!.isNotEmpty) {
+                      await SmsIngestionService.learnCategoryRule(
+                        db,
+                        tx.counterparty!,
+                        selectedId!,
+                      );
                     }
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          }
-        );
+                  }
+                  if (context.mounted) Navigator.pop(context);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        });
       },
     );
   }
@@ -76,7 +77,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final db = ref.watch(dbProvider);
-    final currencyFormatter = NumberFormat.currency(symbol: 'Ksh ', decimalDigits: 2);
+    final currencyFormatter =
+        NumberFormat.currency(symbol: 'Ksh ', decimalDigits: 2);
     final dateFormatter = DateFormat.yMMMd().add_jm();
 
     return Scaffold(
@@ -85,7 +87,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: StreamBuilder<List<Transaction>>(
+      body: StreamBuilder<List<TransactionEntry>>(
         stream: (db.select(db.transactions)
               ..orderBy([(t) => OrderingTerm.desc(t.timestamp)])
               ..limit(50))
@@ -108,7 +110,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               final tx = transactions[index];
               final isIncome = tx.type == 'income';
               final isTransfer = tx.type == 'transfer';
-              
+
               Color amountColor;
               if (isIncome) {
                 amountColor = Colors.green;
@@ -117,14 +119,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               } else {
                 amountColor = Colors.redAccent; // Semantic warning color
               }
-              
+
               final sign = isIncome ? '+' : (isTransfer ? '' : '-');
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: amountColor.withOpacity(0.1),
+                  backgroundColor: amountColor.withValues(alpha: 0.1),
                   child: Icon(
-                    isIncome ? Icons.arrow_downward : (isTransfer ? Icons.swap_horiz : Icons.arrow_upward),
+                    isIncome
+                        ? Icons.arrow_downward
+                        : (isTransfer ? Icons.swap_horiz : Icons.arrow_upward),
                     color: amountColor,
                   ),
                 ),

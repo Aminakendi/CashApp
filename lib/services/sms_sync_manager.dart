@@ -76,9 +76,9 @@ class SmsSyncManager {
         periodicTaskId,
         periodicTaskName,
         frequency: const Duration(minutes: 15),
-        existingWorkPolicy: ExistingWorkPolicy.keep,
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
         constraints: Constraints(
-          networkType: NetworkType.not_required,
+          networkType: NetworkType.notRequired,
         ),
       );
       developer.log('WorkManager periodic sync registered (15 min interval)', name: 'SmsSyncManager');
