@@ -34,7 +34,7 @@ void main() {
           'PXX4GHI789 Confirmed. Ksh500.00 paid to SUPERMARKET LTD. on 24/10/21 at 2:15 PM. New M-PESA balance is Ksh11,500.00. Transaction cost, Ksh0.00.';
       final parsed = MpesaParser.parse(sms) as ParsedTransaction;
 
-      expect(parsed.subtype, MpesaSubtype.buy_goods);
+      expect(parsed.subtype, MpesaSubtype.buyGoods);
       expect(parsed.amount, 500.00);
     });
 
@@ -152,6 +152,43 @@ void main() {
       
       expect(parsed, isA<UnparsedTransaction>());
       expect((parsed as UnparsedTransaction).reason, 'Could not extract amount');
+    });
+
+    test('12. Parse Airtime without space and lowercase confirmed', () {
+      const sms =
+          'UI8FY5F40D confirmed.You bought Ksh10.00 of airtime on 8/9/26 at 12:41 PM.New M-PESA balance is Ksh1,561.42. Transaction cost, Ksh0.00. Amount you can transact within the day is 499,860.00. See all your balances now https://saf.cx/3wAmy';
+      final parsed = MpesaParser.parse(sms) as ParsedTransaction;
+
+      expect(parsed.transactionCode, 'UI8FY5F40D');
+      expect(parsed.subtype, MpesaSubtype.airtime);
+      expect(parsed.amount, 10.00);
+      expect(parsed.balance, 1561.42);
+      expect(parsed.timestamp.hour, 12);
+      expect(parsed.timestamp.minute, 41);
+    });
+
+    test('13. Parse M-Shwari Withdrawal without space before amount', () {
+      const sms =
+          'UI2FY4P5QM Confirmed.Ksh400.00 transferred from M-Shwari account on 2/9/26 at 10:22 AM. M-Shwari balance is Ksh23.30 .M-PESA balance is Ksh400.42 .Transaction cost Ksh.0.00';
+      final parsed = MpesaParser.parse(sms) as ParsedTransaction;
+
+      expect(parsed.transactionCode, 'UI2FY4P5QM');
+      expect(parsed.subtype, MpesaSubtype.mshwari);
+      expect(parsed.type, TransactionType.transfer);
+      expect(parsed.amount, 400.00);
+      expect(parsed.balance, 400.42);
+    });
+
+    test('14. Parse M-Shwari Deposit without space before amount', () {
+      const sms =
+          'UI7FY5B2TW Confirmed.Ksh1,000.00 transferred to M-Shwari account on 7/9/26 at 1:36 PM. M-PESA balance is Ksh2,846.42 .New M-Shwari saving account balance is Ksh6,023.30. Transaction cost Ksh.0.00';
+      final parsed = MpesaParser.parse(sms) as ParsedTransaction;
+
+      expect(parsed.transactionCode, 'UI7FY5B2TW');
+      expect(parsed.subtype, MpesaSubtype.mshwari);
+      expect(parsed.type, TransactionType.transfer);
+      expect(parsed.amount, 1000.00);
+      expect(parsed.balance, 2846.42);
     });
   });
 }

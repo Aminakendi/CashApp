@@ -7,7 +7,7 @@ class Transactions extends Table {
   TextColumn get type => text()(); // income, expense, transfer
   TextColumn get source => text()(); // mpesa_sms, manual
   TextColumn get mpesaTransactionCode => text().nullable().unique()();
-  TextColumn get mpesaSubtype => text().nullable()(); // send, receive, buy_goods, etc.
+  TextColumn get mpesaSubtype => text().nullable()(); // send, receive, buyGoods, etc.
   TextColumn get counterparty => text().nullable()();
   IntColumn get categoryId => integer().nullable().references(Categories, #id)();
   TextColumn get note => text().nullable()();

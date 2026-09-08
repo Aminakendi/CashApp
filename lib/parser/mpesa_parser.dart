@@ -2,7 +2,7 @@ enum TransactionType { income, expense, transfer }
 enum MpesaSubtype {
   send,
   receive,
-  buy_goods,
+  buyGoods,
   paybill,
   withdraw,
   airtime,
@@ -53,60 +53,62 @@ class UnparsedTransaction extends ParseResult {
 }
 
 class MpesaParser {
-  static final RegExp _codeRegExp = RegExp(r'^([A-Z0-9]{10})\s+Confirmed\.');
-  static final RegExp _amountRegExp = RegExp(r'(?:Confirmed\.|received|Withdraw|bought|Transaction of|PM\.|AM\.)\s+Ksh([\d,]+\.\d{2})');
-  static final RegExp _balanceRegExp = RegExp(r'New M-PESA balance is Ksh([\d,]+\.\d{2})');
-  static final RegExp _dateRegExp = RegExp(r'on\s+(\d{1,2}/\d{1,2}/\d{2,4})\s+at\s+(\d{1,2}:\d{2}\s+[APM]{2})');
+  static final RegExp _codeRegExp = RegExp(r'^([A-Z0-9]{10})\s*confirmed\.', caseSensitive: false);
+  static final RegExp _amountRegExp = RegExp(r'(?:confirmed\.|received|withdraw|bought|transaction of|pm\.|am\.)\s*ksh\s*([\d,]+\.\d{2})', caseSensitive: false);
+  static final RegExp _balanceRegExp = RegExp(r'(?:new\s+)?m-pesa balance is\s*ksh\s*([\d,]+\.\d{2})', caseSensitive: false);
+  static final RegExp _dateRegExp = RegExp(r'on\s+(\d{1,2}/\d{1,2}/\d{2,4})\s+at\s+(\d{1,2}:\d{2}\s*[APM]{2})', caseSensitive: false);
 
   static ParseResult parse(String sms) {
-    if (sms.contains('Failed.')) {
+    final lowerSms = sms.toLowerCase();
+
+    if (lowerSms.contains('failed.') || lowerSms.contains('failed,')) {
       return UnparsedTransaction(sms, 'Failed transaction');
     }
     
-    if (!sms.contains('Confirmed.')) {
-      return UnparsedTransaction(sms, 'Missing Confirmed keyword');
+    if (!lowerSms.contains('confirmed.')) {
+      return UnparsedTransaction(sms, 'Missing confirmed. keyword');
     }
 
     final codeMatch = _codeRegExp.firstMatch(sms);
     if (codeMatch == null) {
       return UnparsedTransaction(sms, 'Could not extract transaction code');
     }
-    final code = codeMatch.group(1)!;
+    final code = codeMatch.group(1)!.toUpperCase();
 
     MpesaSubtype subtype = MpesaSubtype.unknown;
     TransactionType type = TransactionType.expense;
     String? counterparty;
 
-    if (sms.contains('Reversal of transaction')) {
+    if (lowerSms.contains('reversal of transaction')) {
       subtype = MpesaSubtype.reversal;
       type = TransactionType.transfer;
-    } else if (sms.contains('You have received')) {
+    } else if (lowerSms.contains('you have received')) {
       subtype = MpesaSubtype.receive;
       type = TransactionType.income;
-      final match = RegExp(r'from\s+(.*?)(?:\s+on|\.|\s*$)').firstMatch(sms);
+      final match = RegExp(r'from\s+(.*?)(?:\s+on|\.|\s*$)', caseSensitive: false).firstMatch(sms);
       counterparty = match?.group(1)?.trim();
-    } else if (sms.contains('sent to')) {
-      if (sms.contains('for account')) {
+    } else if (lowerSms.contains('sent to')) {
+      if (lowerSms.contains('for account')) {
         subtype = MpesaSubtype.paybill;
-        final match = RegExp(r'sent to\s+(.*?)\s+for account').firstMatch(sms);
+        final match = RegExp(r'sent to\s+(.*?)\s+for account', caseSensitive: false).firstMatch(sms);
         counterparty = match?.group(1)?.trim();
       } else {
         subtype = MpesaSubtype.send;
-        final match = RegExp(r'sent to\s+(.*?)(?:\s+on|\.|\s*$)').firstMatch(sms);
+        final match = RegExp(r'sent to\s+(.*?)(?:\s+on|\.|\s*$)', caseSensitive: false).firstMatch(sms);
         counterparty = match?.group(1)?.trim();
       }
-    } else if (sms.contains('paid to')) {
-      if (sms.contains('Fuliza')) {
+    } else if (lowerSms.contains('paid to')) {
+      if (lowerSms.contains('fuliza')) {
         subtype = MpesaSubtype.fuliza;
         counterparty = 'Fuliza M-PESA';
       } else {
-        subtype = MpesaSubtype.buy_goods;
-        final match = RegExp(r'paid to\s+(.*?)(?:\s+on|\.|\s*$)').firstMatch(sms);
+        subtype = MpesaSubtype.buyGoods;
+        final match = RegExp(r'paid to\s+(.*?)(?:\s+on|\.|\s*$)', caseSensitive: false).firstMatch(sms);
         counterparty = match?.group(1)?.trim();
       }
-    } else if (sms.contains('Withdraw')) {
+    } else if (lowerSms.contains('withdraw')) {
       subtype = MpesaSubtype.withdraw;
-      final match = RegExp(r'from\s+(.*?)\s+New M-PESA').firstMatch(sms);
+      final match = RegExp(r'from\s+(.*?)\s+new m-pesa', caseSensitive: false).firstMatch(sms);
       if (match != null) {
           final cp = match.group(1)?.trim();
           if (cp != null && cp.endsWith('.')) {
@@ -115,29 +117,29 @@ class MpesaParser {
               counterparty = cp;
           }
       }
-    } else if (sms.contains('bought') && sms.contains('of airtime')) {
+    } else if (lowerSms.contains('bought') && lowerSms.contains('of airtime')) {
       subtype = MpesaSubtype.airtime;
       counterparty = 'Safaricom';
-    } else if (sms.contains('transferred to M-Shwari')) {
+    } else if (lowerSms.contains('transferred to m-shwari')) {
       subtype = MpesaSubtype.mshwari;
       type = TransactionType.transfer;
       counterparty = 'M-Shwari';
-    } else if (sms.contains('transferred from M-Shwari')) {
+    } else if (lowerSms.contains('transferred from m-shwari')) {
       subtype = MpesaSubtype.mshwari;
       type = TransactionType.transfer;
       counterparty = 'M-Shwari';
-    } else if (sms.contains('transferred to KCB M-PESA')) {
+    } else if (lowerSms.contains('transferred to kcb m-pesa')) {
       subtype = MpesaSubtype.kcb;
       type = TransactionType.transfer;
       counterparty = 'KCB M-PESA';
-    } else if (sms.contains('transferred from KCB M-PESA')) {
+    } else if (lowerSms.contains('transferred from kcb m-pesa')) {
       subtype = MpesaSubtype.kcb;
       type = TransactionType.transfer;
       counterparty = 'KCB M-PESA';
     }
     
     // Override subtype if fuliza was used during another transaction
-    if (sms.contains('Fuliza M-PESA amount is')) {
+    if (lowerSms.contains('fuliza m-pesa amount is')) {
       subtype = MpesaSubtype.fuliza;
     }
 

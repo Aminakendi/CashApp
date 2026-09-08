@@ -26,6 +26,8 @@ class SmsIngestionService {
     AppDatabase db,
     String rawSms, {
     DateTime? fallbackTimestamp,
+    bool skipUnparsedInsert = false,
+    String source = 'mpesa_sms',
   }) async {
     final parseResult = MpesaParser.parse(rawSms);
 
@@ -45,7 +47,7 @@ class SmsIngestionService {
         TransactionsCompanion.insert(
           amount: parseResult.amount,
           type: parseResult.type.name,
-          source: 'mpesa_sms',
+          source: source,
           mpesaTransactionCode: drift.Value(parseResult.transactionCode),
           mpesaSubtype: drift.Value(parseResult.subtype.name),
           counterparty: drift.Value(parseResult.counterparty),
@@ -59,14 +61,16 @@ class SmsIngestionService {
 
       return IngestionResult.success(parseResult, isDuplicate: false);
     } else if (parseResult is UnparsedTransaction) {
-      // Record unparsed SMS for user review
-      await db.into(db.unparsedMessages).insert(
-        UnparsedMessagesCompanion.insert(
-          rawSms: parseResult.rawSms,
-          reason: parseResult.reason,
-        ),
-        mode: drift.InsertMode.insertOrIgnore,
-      );
+      if (!skipUnparsedInsert) {
+        // Record unparsed SMS for user review
+        await db.into(db.unparsedMessages).insert(
+          UnparsedMessagesCompanion.insert(
+            rawSms: parseResult.rawSms,
+            reason: parseResult.reason,
+          ),
+          mode: drift.InsertMode.insertOrIgnore,
+        );
+      }
 
       return IngestionResult.unparsed(parseResult);
     }
@@ -79,13 +83,14 @@ class SmsIngestionService {
   /// Ingests a list of SMS messages in a single database transaction for high performance.
   static Future<int> processBatchSms(
     AppDatabase db,
-    List<String> rawSmsList,
-  ) async {
+    List<String> rawSmsList, {
+    String source = 'mpesa_sms',
+  }) async {
     int insertedCount = 0;
 
     await db.transaction(() async {
       for (final rawSms in rawSmsList) {
-        final result = await processSingleSms(db, rawSms);
+        final result = await processSingleSms(db, rawSms, source: source);
         if (result.isParsed && !result.isDuplicate) {
           insertedCount++;
         }

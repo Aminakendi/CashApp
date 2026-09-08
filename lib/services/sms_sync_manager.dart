@@ -45,7 +45,7 @@ void mpesaWorkmanagerCallbackDispatcher() {
       bool success = false;
       try {
         db = AppDatabase();
-        await SmsSyncManager.performDifferentialSync(db);
+        await SmsSyncManager.performDifferentialSync(db, source: 'mpesa_sms_layer_2');
         success = true;
       } catch (e, stack) {
         developer.log('Error in WorkManager sync task: $e', name: 'SmsSyncManager', error: e, stackTrace: stack);
@@ -69,7 +69,6 @@ class SmsSyncManager {
     try {
       await Workmanager().initialize(
         mpesaWorkmanagerCallbackDispatcher,
-        isInDebugMode: false,
       );
 
       await Workmanager().registerPeriodicTask(
@@ -93,7 +92,7 @@ class SmsSyncManager {
         onNewMessage: (tel.SmsMessage message) async {
           final body = message.body;
           if (body != null && body.isNotEmpty) {
-            await SmsIngestionService.processSingleSms(db, body);
+            await SmsIngestionService.processSingleSms(db, body, source: 'mpesa_sms_layer_1');
             await SyncStateService.setLastSyncedAt(DateTime.now());
           }
         },
@@ -111,7 +110,7 @@ class SmsSyncManager {
 
   /// Layer 3 & Layer 2 shared engine: Differential sync from SMS inbox.
   /// Queries messages newer than lastSyncedAt minus a 5-minute safety margin.
-  static Future<int> performDifferentialSync(AppDatabase db) async {
+  static Future<int> performDifferentialSync(AppDatabase db, {String source = 'mpesa_sms_layer_3'}) async {
     try {
       // 1. Drain the background staging queue first
       final stagedMessages = await SmsStagingService.drainQueue();
@@ -119,8 +118,8 @@ class SmsSyncManager {
         developer.log('Draining ${stagedMessages.length} messages from staging queue', name: 'SmsSyncManager');
         final contents = stagedMessages.map((m) => m.content).toList();
         
-        // This throws if DB insert completely fails.
-        await SmsIngestionService.processBatchSms(db, contents);
+        // The staged messages were captured by Layer 1 background listener
+        await SmsIngestionService.processBatchSms(db, contents, source: 'mpesa_sms_layer_1');
         
         // ONLY if the batch succeeded, delete the files
         await SmsStagingService.deleteStagedFiles(stagedMessages);
@@ -160,7 +159,7 @@ class SmsSyncManager {
       }).map((m) => m.body ?? '').where((b) => b.isNotEmpty).toList();
 
       if (newMessages.isNotEmpty) {
-        final inserted = await SmsIngestionService.processBatchSms(db, newMessages);
+        final inserted = await SmsIngestionService.processBatchSms(db, newMessages, source: source);
         developer.log('Differential sync processed ${newMessages.length} SMS ($inserted new transactions)', name: 'SmsSyncManager');
       }
 
@@ -203,7 +202,7 @@ class SmsSyncManager {
       onProgress?.call(0, total);
 
       // Ingest in a single DB transaction
-      final insertedCount = await SmsIngestionService.processBatchSms(db, mpesaMessages);
+      final insertedCount = await SmsIngestionService.processBatchSms(db, mpesaMessages, source: 'mpesa_sms_historical');
 
       await SyncStateService.setHistoricalSyncDone(true);
       await SyncStateService.setLastSyncedAt(DateTime.now());
@@ -213,6 +212,35 @@ class SmsSyncManager {
       return insertedCount;
     } catch (e, stack) {
       developer.log('Historical sync error: $e', name: 'SmsSyncManager', error: e, stackTrace: stack);
+      return 0;
+    }
+  }
+
+  /// Retroactively re-processes UnparsedMessages.
+  /// Routes through the exact same repository/dedup path to avoid duplicates.
+  static Future<int> reprocessUnparsedMessages(AppDatabase db) async {
+    try {
+      final unparsed = await db.select(db.unparsedMessages).get();
+      if (unparsed.isEmpty) return 0;
+
+      developer.log('Found ${unparsed.length} unparsed messages. Attempting reprocessing.', name: 'SmsSyncManager');
+      int successfulCount = 0;
+
+      for (final msg in unparsed) {
+        final result = await SmsIngestionService.processSingleSms(db, msg.rawSms, skipUnparsedInsert: true, source: 'mpesa_sms_reprocessed');
+        
+        if (result.isParsed) {
+          // It parsed successfully this time (or was a duplicate, which is still a parse success)
+          successfulCount++;
+          // Delete it from the unparsed table since it's now handled
+          await (db.delete(db.unparsedMessages)..where((t) => t.id.equals(msg.id))).go();
+        }
+      }
+
+      developer.log('Reprocessed $successfulCount out of ${unparsed.length} unparsed messages.', name: 'SmsSyncManager');
+      return successfulCount;
+    } catch (e, stack) {
+      developer.log('Reprocessing error: $e', name: 'SmsSyncManager', error: e, stackTrace: stack);
       return 0;
     }
   }
