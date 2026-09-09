@@ -9,9 +9,14 @@ import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 import 'tables.dart';
 import 'key_store.dart';
 
+import 'analytics_dao.dart';
+
 part 'database.g.dart';
 
-@DriftDatabase(tables: [Transactions, Categories, SavingsGoals, CategoryRules, UnparsedMessages])
+@DriftDatabase(
+  tables: [Transactions, Categories, SavingsGoals, CategoryRules, UnparsedMessages],
+  daos: [AnalyticsDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.e);
