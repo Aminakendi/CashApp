@@ -100,6 +100,8 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
             timestamp: _selectedDate,
           ),
         );
+        
+    await db.analyticsDao.checkBudgetThresholds(_selectedCategoryId!, _selectedDate);
 
     if (counterparty.isNotEmpty && _selectedCategoryId != null) {
       await SmsIngestionService.learnCategoryRule(

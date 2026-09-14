@@ -59,6 +59,10 @@ class SmsIngestionService {
         mode: drift.InsertMode.insertOrIgnore,
       );
 
+      if (categoryId != null && parseResult.type.name == 'expense') {
+        await db.analyticsDao.checkBudgetThresholds(categoryId, parseResult.timestamp);
+      }
+
       return IngestionResult.success(parseResult, isDuplicate: false);
     } else if (parseResult is UnparsedTransaction) {
       if (!skipUnparsedInsert) {

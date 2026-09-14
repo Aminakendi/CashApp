@@ -14,7 +14,7 @@ import 'analytics_dao.dart';
 part 'database.g.dart';
 
 @DriftDatabase(
-  tables: [Transactions, Categories, SavingsGoals, CategoryRules, UnparsedMessages],
+  tables: [Transactions, Categories, SavingsGoals, CategoryRules, UnparsedMessages, BudgetNotifications],
   daos: [AnalyticsDao],
 )
 class AppDatabase extends _$AppDatabase {
@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -33,6 +33,9 @@ class AppDatabase extends _$AppDatabase {
       onUpgrade: (Migrator m, int from, int to) async {
         if (from < 2) {
           await m.addColumn(transactions, transactions.notes2);
+        }
+        if (from < 3) {
+          await m.createTable(budgetNotifications);
         }
       },
       beforeOpen: (details) async {

@@ -64,6 +64,14 @@ class HomeTab extends ConsumerWidget {
                           .write(TransactionsCompanion(
                               categoryId: drift.Value(selectedId)));
                     }
+
+                    // Check budget thresholds for the new category.
+                    // We check both the transaction's original month (to silently update DB state)
+                    // and the current month (in case retroactive rules updated current month's spend)
+                    if (tx.type == 'expense') {
+                      await db.analyticsDao.checkBudgetThresholds(selectedId!, tx.timestamp);
+                      await db.analyticsDao.checkBudgetThresholds(selectedId!, DateTime.now());
+                    }
                   }
                   if (context.mounted) Navigator.pop(context);
                 },

@@ -6,6 +6,8 @@ part of 'analytics_dao.dart';
 mixin _$AnalyticsDaoMixin on DatabaseAccessor<AppDatabase> {
   $TransactionsTable get transactions => attachedDatabase.transactions;
   $CategoriesTable get categories => attachedDatabase.categories;
+  $BudgetNotificationsTable get budgetNotifications =>
+      attachedDatabase.budgetNotifications;
   AnalyticsDaoManager get managers => AnalyticsDaoManager(this);
 }
 
@@ -16,4 +18,7 @@ class AnalyticsDaoManager {
       $$TransactionsTableTableManager(_db.attachedDatabase, _db.transactions);
   $$CategoriesTableTableManager get categories =>
       $$CategoriesTableTableManager(_db.attachedDatabase, _db.categories);
+  $$BudgetNotificationsTableTableManager get budgetNotifications =>
+      $$BudgetNotificationsTableTableManager(
+          _db.attachedDatabase, _db.budgetNotifications);
 }

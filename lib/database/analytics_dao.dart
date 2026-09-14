@@ -1,12 +1,74 @@
+import 'dart:io';
 import 'package:drift/drift.dart';
 import 'database.dart';
 import 'tables.dart';
+import '../services/notification_service.dart';
 
 part 'analytics_dao.g.dart';
 
-@DriftAccessor(tables: [Transactions, Categories])
+@DriftAccessor(tables: [Transactions, Categories, BudgetNotifications])
 class AnalyticsDao extends DatabaseAccessor<AppDatabase> with _$AnalyticsDaoMixin {
   AnalyticsDao(super.db);
+
+  /// Get total spent for a specific category in a specific month
+  Future<double> getCategorySpendForMonth(int categoryId, int year, int month) async {
+    final start = DateTime(year, month, 1);
+    final end = DateTime(year, month + 1, 1).subtract(const Duration(milliseconds: 1));
+
+    final amountSum = transactions.amount.sum();
+    final query = selectOnly(transactions)
+      ..addColumns([amountSum])
+      ..where(
+        transactions.timestamp.isBetweenValues(start, end) &
+        transactions.type.equals('expense') &
+        transactions.type.isNotValue('transfer') &
+        transactions.categoryId.equals(categoryId)
+      );
+
+    final result = await query.getSingle();
+    return result.read(amountSum) ?? 0.0;
+  }
+
+  /// Check budget thresholds and fire notifications
+  Future<void> checkBudgetThresholds(int categoryId, DateTime transactionDate) async {
+    final category = await (select(categories)..where((c) => c.id.equals(categoryId))).getSingleOrNull();
+    if (category == null || category.monthlyBudget == null || category.monthlyBudget! <= 0) return;
+
+    final spent = await getCategorySpendForMonth(categoryId, transactionDate.year, transactionDate.month);
+    final percentage = spent / category.monthlyBudget!;
+    
+    final yearMonth = '${transactionDate.year}-${transactionDate.month.toString().padLeft(2, '0')}';
+    final now = DateTime.now();
+    final isCurrentMonth = transactionDate.year == now.year && transactionDate.month == now.month;
+
+    // Check thresholds: we could hit both 80 and 100 in one jump
+    final List<int> thresholdsToTrigger = [];
+    if (percentage >= 1.0) {
+      thresholdsToTrigger.add(100);
+      thresholdsToTrigger.add(80); // In case it jumped, try to log both
+    } else if (percentage >= 0.8) {
+      thresholdsToTrigger.add(80);
+    }
+
+    for (final threshold in thresholdsToTrigger) {
+      try {
+        await into(budgetNotifications).insert(
+          BudgetNotificationsCompanion.insert(
+            categoryId: categoryId,
+            yearMonth: yearMonth,
+            threshold: threshold,
+          ),
+        );
+        // If insert succeeds, it means we haven't fired this threshold for this category+month.
+        if (isCurrentMonth && !Platform.environment.containsKey('FLUTTER_TEST')) {
+          // The notification uses the threshold percentage to avoid saying '150% of your budget' in an 80% alert.
+          await NotificationService().showBudgetAlert(category.name, threshold / 100.0, spent, category.monthlyBudget!);
+        }
+      } catch (e) {
+        // Unique constraint violation (SqliteException) - we already sent this notification.
+      }
+    }
+  }
 
   /// Get total income for a specific month
   Future<double> getTotalIncome(int year, int month) async {

@@ -49,3 +49,17 @@ class UnparsedMessages extends Table {
   TextColumn get reason => text()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
+
+@DataClassName('BudgetNotification')
+class BudgetNotifications extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get categoryId => integer().references(Categories, #id)();
+  TextColumn get yearMonth => text()(); // Format: 'YYYY-MM'
+  IntColumn get threshold => integer()(); // 80 or 100
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+        {categoryId, yearMonth, threshold}
+      ];
+}

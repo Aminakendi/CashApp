@@ -35,6 +35,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final db = ref.read(dbProvider);
     await DatabaseSeeder.seedCategoriesIfEmpty(db);
 
+    // Seed known counterparty→category rules (one-time, guard: runs only if
+    // CategoryRules table is empty). Survives future launches safely.
+    await DatabaseSeeder.seedCategoryRulesIfEmpty(db);
+
+    // Retroactively re-apply rules to any expense transactions currently
+    // sitting at the wrong category (e.g., "Other" after a data wipe).
+    final reclassified =
+        await DatabaseSeeder.reapplyCategoryRulesToExistingTransactions(db);
+    if (reclassified > 0) {
+      debugPrint('>>> SEEDER: Reclassified $reclassified existing transactions <<<');
+    }
+
+
+
     final hasSmsPermission = await Permission.sms.isGranted;
     if (hasSmsPermission) {
       await SmsSyncManager.initialize(db);
