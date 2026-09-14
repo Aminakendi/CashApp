@@ -19,7 +19,13 @@ class Transactions extends Table {
 
 @DataClassName('Category')
 class Categories extends Table {
-  IntColumn get id => integer().autoIncrement()();
+  // Explicit integer primary key — no AUTOINCREMENT.
+  // Default categories use fixed IDs 1–11 (seeded at install time).
+  // User-created categories must use IDs ≥ 1000 to avoid collisions.
+  @override
+  Set<Column> get primaryKey => {id};
+
+  IntColumn get id => integer()();
   TextColumn get name => text()();
   TextColumn get icon => text()();
   RealColumn get monthlyBudget => real().nullable()();
