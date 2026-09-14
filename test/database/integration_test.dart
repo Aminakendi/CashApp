@@ -94,11 +94,11 @@ void main() {
 
     final result = await SmsIngestionService.processSingleSms(database, promoSms);
     expect(result.isParsed, false);
-    expect(result.unparsed?.reason, 'Missing Confirmed keyword');
+    expect(result.unparsed?.reason, 'Missing confirmed. keyword');
 
     final unparsedList = await database.select(database.unparsedMessages).get();
     expect(unparsedList.length, 1);
     expect(unparsedList.first.rawSms, promoSms);
-    expect(unparsedList.first.reason, 'Missing Confirmed keyword');
+    expect(unparsedList.first.reason, 'Missing confirmed. keyword');
   });
 }

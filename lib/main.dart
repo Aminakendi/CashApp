@@ -12,7 +12,7 @@ import 'ui/dashboard_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  await NotificationService().initialize();
+  await NotificationService().initializePlugin();
 
   // Workaround for older Android versions using sqlite3_flutter_libs
   if (Platform.isAndroid) {

@@ -143,7 +143,7 @@ void main() {
       final parsed = MpesaParser.parse(sms);
       
       expect(parsed, isA<UnparsedTransaction>());
-      expect((parsed as UnparsedTransaction).reason, 'Missing Confirmed keyword');
+      expect((parsed as UnparsedTransaction).reason, 'Missing confirmed. keyword');
     });
 
     test('11. Returns UnparsedTransaction for malformed M-PESA SMS', () {

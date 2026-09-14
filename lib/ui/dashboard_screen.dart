@@ -7,6 +7,7 @@ import '../database/seeder.dart';
 import '../theme/app_theme.dart';
 import 'manual_entry_screen.dart';
 import 'permission_onboarding_dialog.dart';
+import '../services/notification_service.dart';
 import '../services/sms_sync_manager.dart';
 
 import 'tabs/home_tab.dart';
@@ -48,6 +49,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
 
 
+
+    // Request notification permission from the UI — after the app has rendered.
+    // Must NOT be called from main() as it shows an OS dialog that blocks runApp().
+    await NotificationService().requestPermissionIfNeeded();
 
     final hasSmsPermission = await Permission.sms.isGranted;
     if (hasSmsPermission) {

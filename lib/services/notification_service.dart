@@ -8,19 +8,28 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  Future<void> initialize() async {
-    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-    
+  /// Registers the notification plugin and channel configuration.
+  /// Safe to call in main() before runApp() — does not show any system dialog.
+  Future<void> initializePlugin() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
     // For iOS (if needed in the future)
-    const DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings();
-    
+    const DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings();
+
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
     );
 
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
 
+  /// Requests the POST_NOTIFICATIONS permission on Android 13+.
+  /// Shows an OS dialog — MUST be called from the UI after runApp() and only
+  /// after the app has rendered at least one frame. Never call from main().
+  Future<void> requestPermissionIfNeeded() async {
     if (Platform.isAndroid) {
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
