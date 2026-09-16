@@ -25,6 +25,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _isSeeded = false;
+  String? _initializationError;
   int _currentIndex = 0;
 
   @override
@@ -34,48 +35,81 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _initialize() async {
-    final db = ref.read(dbProvider);
-    await DatabaseSeeder.seedCategoriesIfEmpty(db);
+    try {
+      final db = ref.read(dbProvider);
+      await DatabaseSeeder.seedCategoriesIfEmpty(db);
 
-    // Seed known counterparty→category rules (one-time, guard: runs only if
-    // CategoryRules table is empty). Survives future launches safely.
-    await DatabaseSeeder.seedCategoryRulesIfEmpty(db);
+      // Seed known counterparty→category rules (one-time, guard: runs only if
+      // CategoryRules table is empty). Survives future launches safely.
+      await DatabaseSeeder.seedCategoryRulesIfEmpty(db);
 
-    // Retroactively re-apply rules to any expense transactions currently
-    // sitting at the wrong category (e.g., "Other" after a data wipe).
-    final reclassified =
-        await DatabaseSeeder.reapplyCategoryRulesToExistingTransactions(db);
-    if (reclassified > 0) {
-      debugPrint('>>> SEEDER: Reclassified $reclassified existing transactions <<<');
-    }
+      // Retroactively re-apply rules to any expense transactions currently
+      // sitting at the wrong category (e.g., "Other" after a data wipe).
+      final reclassified =
+          await DatabaseSeeder.reapplyCategoryRulesToExistingTransactions(db);
+      if (reclassified > 0) {
+        debugPrint('>>> SEEDER: Reclassified $reclassified existing transactions <<<');
+      }
 
+      // Request notification permission from the UI — after the app has rendered.
+      // Must NOT be called from main() as it shows an OS dialog that blocks runApp().
+      await NotificationService().requestPermissionIfNeeded();
 
+      final hasSmsPermission = await Permission.sms.isGranted;
+      if (hasSmsPermission) {
+        await SmsSyncManager.initialize(db);
+        await SmsSyncManager.reprocessUnparsedMessages(db);
+      }
 
-    // Request notification permission from the UI — after the app has rendered.
-    // Must NOT be called from main() as it shows an OS dialog that blocks runApp().
-    await NotificationService().requestPermissionIfNeeded();
+      if (mounted) {
+        setState(() {
+          _isSeeded = true;
+        });
 
-    final hasSmsPermission = await Permission.sms.isGranted;
-    if (hasSmsPermission) {
-      await SmsSyncManager.initialize(db);
-      await SmsSyncManager.reprocessUnparsedMessages(db);
-    }
-
-    if (mounted) {
-      setState(() {
-        _isSeeded = true;
-      });
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          PermissionOnboardingSheet.showIfNeeded(context, () {});
-        }
-      });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            PermissionOnboardingSheet.showIfNeeded(context, () {});
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _initializationError = 'Couldn\'t start — database initialization failed. If a migration backup failed, check your device storage.\n\nDetails: $e';
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_initializationError != null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('M-Pesa Tracker'),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 64),
+                const SizedBox(height: 16),
+                Text(
+                  _initializationError!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('M-Pesa Tracker'),
