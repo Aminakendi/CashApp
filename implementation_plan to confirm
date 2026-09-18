@@ -1,0 +1,72 @@
+# Data Integrity & Safeguards Implementation Plan
+
+This plan details the implementation of the permanent safeguards requested to prevent future data loss and corruption incidents. 
+
+## Critical Discovery: The Encryption Trap
+
+Before implementing the "Export Backup" feature, there is a critical architectural reality to flag. The app currently uses `sqlcipher_flutter_libs` and `flutter_secure_storage` to encrypt `app.db`. The encryption key is stored in Android's Keystore/SharedPreferences. 
+
+**When you uninstall an app on Android, the Keystore and SharedPreferences are wiped.** 
+
+This means if you export `app.db` directly to your Downloads folder and then uninstall the app, **the exported backup is permanently unreadable bricked data.** You cannot restore it to a new installation because the new installation generates a brand new encryption key. 
+
+To make the exported backup actually survive an uninstall, we must export a **decrypted** copy of the data. 
+
+## Open Questions
+
+> [!WARNING]
+> **Backup Format Decision Needed**
+> Because we cannot safely export the encrypted `app.db` for uninstall-survival, we must choose an export format:
+> 1. **(Recommended) JSON Export:** We export the crucial tables (`Transactions`, `CategoryRules`, `Categories`) into a single `backup.json` file. This is universally readable, easy to verify, and easy to parse for a future "Import" feature.
+> 2. **Plaintext SQLite:** We write raw SQL to clone the database into a new, unencrypted `backup.db` file and export that. 
+>
+> *Which format do you prefer for the manual export?*
+
+## Proposed Changes
+
+### Component 1: Stabilizing Category IDs
+The `Categories` table currently uses an autoincrement ID. If the table is wiped or migrated, IDs can shift, breaking `categoryId` references in `Transactions`. We will hardcode the IDs of the default 11 categories.
+
+#### [MODIFY] `lib/database/tables.dart`
+- Remove `.autoIncrement()` from `Categories.id`. It will be a standard integer primary key that we explicitly provide.
+
+#### [MODIFY] `lib/database/seeder.dart`
+- Update `seedCategoriesIfEmpty` to insert categories with explicit IDs (1 through 11).
+
+### Component 2: In-App Pre-Migration Backup
+This protects against bad migrations during a *normal* app update (not an uninstall).
+
+#### [MODIFY] `lib/database/database.dart`
+- Update the `onUpgrade` step in the `MigrationStrategy` to copy `app.db` to `app.db.bak` within the app's documents directory before executing any migration statements.
+
+### Component 3: Manual Export Backup
+This protects against uninstalls by saving data to shared external storage.
+
+#### [MODIFY] `pubspec.yaml`
+- Add `share_plus` to allow exporting the backup file to the Android SAF (Save to Drive, Downloads, etc).
+- Add `path_provider` (already present) and `dart:convert` for JSON encoding.
+
+#### [NEW] `lib/services/backup_service.dart`
+- Create a service with a method `exportBackup(AppDatabase db)`.
+- It will read the relevant tables (or all tables), serialize them (e.g. to JSON), write to a temporary file, and invoke `Share.shareXFiles` so the user can save it anywhere.
+
+#### [MODIFY] `lib/ui/settings_screen.dart` (or similar)
+- Add an "Export Database Backup" button that triggers the `BackupService`.
+
+### Component 4: Migration Data-Survival Tests
+A mandatory test asserting that schema migrations do not drop existing data.
+
+#### [MODIFY] `test/database/migration_test.dart`
+- Add a test that creates a v2 database schema.
+- Inserts a mock transaction and a mock `CategoryRule`.
+- Opens the database with the v3 schema (triggering migration).
+- Asserts that the transaction, its `categoryId`, and the `CategoryRule` are fully intact.
+
+## Verification Plan
+
+### Automated Tests
+- Run `flutter test test/database/migration_test.dart` to verify the migration survival test passes.
+
+### Manual Verification
+- Launch the app, navigate to Settings, and tap "Export Backup". Verify the file can be saved to the device and contains the correct data.
+- Confirm existing data remains intact after modifying the `Categories` schema.

@@ -50,6 +50,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         debugPrint('>>> SEEDER: Reclassified $reclassified existing transactions <<<');
       }
 
+      // Retroactively fix KCB transactions impacted by Safaricom's spelling typo
+      final fixedKcb = await DatabaseSeeder.retroactiveFixKcbTransactions(db);
+      if (fixedKcb > 0) {
+        debugPrint('>>> SEEDER: Fixed $fixedKcb KCB M-PESA transactions <<<');
+      }
+
       // Request notification permission from the UI — after the app has rendered.
       // Must NOT be called from main() as it shows an OS dialog that blocks runApp().
       await NotificationService().requestPermissionIfNeeded();

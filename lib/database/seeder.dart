@@ -114,4 +114,27 @@ class DatabaseSeeder {
 
     return updatedCount;
   }
+
+  /// Retroactively fixes KCB M-PESA transactions that were misclassified as 'unknown'
+  /// due to the Safaricom spelling typo ('transfered').
+  static Future<int> retroactiveFixKcbTransactions(AppDatabase db) async {
+    final txs = await db.select(db.transactions).get();
+    int updatedCount = 0;
+
+    for (final tx in txs) {
+      if (tx.mpesaSubtype == 'unknown' && tx.rawSmsText != null && tx.rawSmsText!.toLowerCase().contains('kcb m-pesa')) {
+        await (db.update(db.transactions)..where((t) => t.id.equals(tx.id))).write(
+          TransactionsCompanion(
+            type: const drift.Value('transfer'),
+            mpesaSubtype: const drift.Value('kcb'),
+            counterparty: const drift.Value('KCB M-PESA'),
+            categoryId: const drift.Value(null), // Clear category since it's a transfer
+          ),
+        );
+        updatedCount++;
+      }
+    }
+
+    return updatedCount;
+  }
 }

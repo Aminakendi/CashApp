@@ -1,0 +1,93 @@
+﻿--------- beginning of system
+09-11 12:51:11.284  7983  7983 D ActivityThread: com.example.mpesa_tracker will use render engine as VK
+--------- beginning of main
+09-11 13:20:58.882  7983  7983 D WM-DelayedWorkTracker: Scheduling work ecbe87b6-af74-43fa-aa94-602ae533a432
+09-11 13:20:58.889  7983  7983 D WM-GreedyScheduler: Starting work for ecbe87b6-af74-43fa-aa94-602ae533a432
+09-11 13:20:58.958  7983  8015 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=ecbe87b6-af74-43fa-aa94-602ae533a432, generation=0)
+09-11 13:20:58.990  7983  7983 D WM-WorkerWrapper: Starting work for dev.fluttercommunity.workmanager.BackgroundWorker
+09-11 13:20:59.053  7983 23821 W libc    : Access denied finding property "ro.vendor.mediatek.platform"
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: QUALCOMM build          : 2e251f7ab9, Iee84b1ed59
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Build Date              : 05/16/25
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Shader Compiler Version : EV031.36.08.28
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Local Branch            : 
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Remote Branch           : refs/tags/AU_LINUX_ANDROID_LA.VENDOR.1.0.R1.11.00.00.816.269
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Remote Branch           : NONE
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Reconstruct Branch      : NOTHING
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Build Config            : S P 12.1.1 AArch64
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Driver Path             : /vendor/lib64/hw/vulkan.adreno.so
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Driver Version          : 0615.87.2
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: PFP                     : 0x01730181
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: ME                      : 0x00000000
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Application Name    : Impeller
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Application Version : 0x00400000
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Engine Name         : Impeller
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Engine Version      : 0x00800000
+09-11 13:20:59.091  7983 23821 I AdrenoVK-0: Api Version         : 0x00401000
+09-11 13:20:59.153  7983 23821 I flutter : [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+09-11 13:21:03.152  7983  8018 I WM-WorkerWrapper: Worker result SUCCESS for Work [ id=ecbe87b6-af74-43fa-aa94-602ae533a432, tags={ dev.fluttercommunity.workmanager.BackgroundWorker } ]
+09-11 13:21:03.231  7983  7983 D WM-Processor: Processor ecbe87b6-af74-43fa-aa94-602ae533a432 executed; reschedule = false
+09-11 13:21:03.261  7983  8007 D WM-GreedyScheduler: Cancelling work ID ecbe87b6-af74-43fa-aa94-602ae533a432
+09-11 13:21:03.314  7983  8007 D WM-SystemJobScheduler: Scheduling work ID ecbe87b6-af74-43fa-aa94-602ae533a432Job ID 3
+09-11 13:32:12.275  7983  7983 D ActivityThread: Package [com.google.android.tts] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:32:12.395  7983  7983 D ActivityThread: Package [com.google.android.tts] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:32:12.448  7983  7983 D ActivityThread: Package [com.google.android.tts] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:32:56.529  7983  7983 D ActivityThread: Package [com.google.android.verifier] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:32:56.595  7983  7983 D ActivityThread: Package [com.google.android.verifier] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:32:56.647  7983  7983 D ActivityThread: Package [com.google.android.verifier] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:33:33.001  7983  7983 D ActivityThread: Package [com.locket.Locket] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:33:33.053  7983  7983 D ActivityThread: Package [com.locket.Locket] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:33:33.208  7983  7983 D ActivityThread: Package [com.locket.Locket] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:34:37.979  7983  7983 D ActivityThread: Package [com.ubercab] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:34:38.014  7983  7983 D ActivityThread: Package [com.ubercab] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:34:38.022  7983  7983 D ActivityThread: Package [com.ubercab] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:35:40.428  7983  7983 D ActivityThread: Package [com.twitter.android] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:35:40.478  7983  7983 D ActivityThread: Package [com.twitter.android] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:35:40.509  7983  7983 D ActivityThread: Package [com.twitter.android] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:36:03.179  7983  7983 D WM-DelayedWorkTracker: Scheduling work ecbe87b6-af74-43fa-aa94-602ae533a432
+09-11 13:36:03.188  7983  7983 D WM-GreedyScheduler: Starting work for ecbe87b6-af74-43fa-aa94-602ae533a432
+09-11 13:36:03.297  7983  8007 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=ecbe87b6-af74-43fa-aa94-602ae533a432, generation=0)
+09-11 13:36:03.340  7983  7983 D WM-WorkerWrapper: Starting work for dev.fluttercommunity.workmanager.BackgroundWorker
+09-11 13:36:03.418  7983 32607 W libc    : Access denied finding property "ro.vendor.mediatek.platform"
+09-11 13:36:03.507  7983 32607 I AdrenoVK-0: QUALCOMM build          : 2e251f7ab9, Iee84b1ed59
+09-11 13:36:03.507  7983 32607 I AdrenoVK-0: Build Date              : 05/16/25
+09-11 13:36:03.507  7983 32607 I AdrenoVK-0: Shader Compiler Version : EV031.36.08.28
+09-11 13:36:03.507  7983 32607 I AdrenoVK-0: Local Branch            : 
+09-11 13:36:03.507  7983 32607 I AdrenoVK-0: Remote Branch           : refs/tags/AU_LINUX_ANDROID_LA.VENDOR.1.0.R1.11.00.00.816.269
+09-11 13:36:03.507  7983 32607 I AdrenoVK-0: Remote Branch           : NONE
+09-11 13:36:03.507  7983 32607 I AdrenoVK-0: Reconstruct Branch      : NOTHING
+09-11 13:36:03.508  7983 32607 I AdrenoVK-0: Build Config            : S P 12.1.1 AArch64
+09-11 13:36:03.508  7983 32607 I AdrenoVK-0: Driver Path             : /vendor/lib64/hw/vulkan.adreno.so
+09-11 13:36:03.508  7983 32607 I AdrenoVK-0: Driver Version          : 0615.87.2
+09-11 13:36:03.508  7983 32607 I AdrenoVK-0: PFP                     : 0x01730181
+09-11 13:36:03.509  7983 32607 I AdrenoVK-0: ME                      : 0x00000000
+09-11 13:36:03.509  7983 32607 I AdrenoVK-0: Application Name    : Impeller
+09-11 13:36:03.509  7983 32607 I AdrenoVK-0: Application Version : 0x00400000
+09-11 13:36:03.509  7983 32607 I AdrenoVK-0: Engine Name         : Impeller
+09-11 13:36:03.509  7983 32607 I AdrenoVK-0: Engine Version      : 0x00800000
+09-11 13:36:03.509  7983 32607 I AdrenoVK-0: Api Version         : 0x00401000
+09-11 13:36:03.601  7983 32607 I flutter : [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+09-11 13:36:08.532  7983  8018 I WM-WorkerWrapper: Worker result SUCCESS for Work [ id=ecbe87b6-af74-43fa-aa94-602ae533a432, tags={ dev.fluttercommunity.workmanager.BackgroundWorker } ]
+09-11 13:36:08.612  7983  7983 D WM-Processor: Processor ecbe87b6-af74-43fa-aa94-602ae533a432 executed; reschedule = false
+09-11 13:36:08.634  7983  8017 D WM-GreedyScheduler: Cancelling work ID ecbe87b6-af74-43fa-aa94-602ae533a432
+09-11 13:36:08.703  7983  8017 D WM-SystemJobScheduler: Scheduling work ID ecbe87b6-af74-43fa-aa94-602ae533a432Job ID 4
+09-11 13:36:27.027  7983  7983 D ActivityThread: Package [com.stardust.app] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:36:27.082  7983  7983 D ActivityThread: Package [com.stardust.app] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:36:27.107  7983  7983 D ActivityThread: Package [com.stardust.app] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:36:55.826  7983  7983 D ActivityThread: Package [com.microsoft.skydrive] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:36:55.844  7983  7983 D ActivityThread: Package [com.microsoft.skydrive] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:36:55.859  7983  7983 D ActivityThread: Package [com.microsoft.skydrive] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:38:02.692  7983  8005 I e.mpesa_tracker: Waiting for a blocking GC ProfileSaver
+09-11 13:38:02.881  7983  7983 D ActivityThread: Package [com.truecaller] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:38:02.900  7983  7983 D ActivityThread: Package [com.truecaller] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:38:02.912  7983  7991 W e.mpesa_tracker: Reducing the number of considered missed Gc histogram windows from 253 to 100
+09-11 13:38:02.913  7983  8005 I e.mpesa_tracker: WaitForGcToComplete blocked ProfileSaver on Background for 221.442ms
+09-11 13:38:02.930  7983  7983 D ActivityThread: Package [com.truecaller] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:38:50.155  7983  7983 D ActivityThread: Package [com.realbyteapps.moneymanagerfree] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:38:50.195  7983  7983 D ActivityThread: Package [com.realbyteapps.moneymanagerfree] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:38:50.242  7983  7983 D ActivityThread: Package [com.realbyteapps.moneymanagerfree] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:39:02.813  7983  7983 D ActivityThread: Package [com.google.android.apps.accessibility.voiceaccess] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:39:02.835  7983  7983 D ActivityThread: Package [com.google.android.apps.accessibility.voiceaccess] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:39:02.877  7983  7983 D ActivityThread: Package [com.google.android.apps.accessibility.voiceaccess] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:39:26.550  7983  7983 D ActivityThread: Package [com.deepseek.chat] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:39:26.579  7983  7983 D ActivityThread: Package [com.deepseek.chat] reported as REPLACED, but missing application info. Assuming REMOVED.
+09-11 13:39:26.591  7983  7983 D ActivityThread: Package [com.deepseek.chat] reported as REPLACED, but missing application info. Assuming REMOVED.

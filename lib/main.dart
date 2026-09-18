@@ -19,8 +19,6 @@ void main() async {
     await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
   }
 
-
-
   runApp(
     const ProviderScope(
       child: MyApp(),

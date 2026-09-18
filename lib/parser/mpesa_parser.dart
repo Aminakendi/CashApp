@@ -128,11 +128,11 @@ class MpesaParser {
       subtype = MpesaSubtype.mshwari;
       type = TransactionType.transfer;
       counterparty = 'M-Shwari';
-    } else if (lowerSms.contains('transferred to kcb m-pesa')) {
+    } else if (lowerSms.contains('to kcb m-pesa')) {
       subtype = MpesaSubtype.kcb;
       type = TransactionType.transfer;
       counterparty = 'KCB M-PESA';
-    } else if (lowerSms.contains('transferred from kcb m-pesa')) {
+    } else if (lowerSms.contains('from kcb m-pesa')) {
       subtype = MpesaSubtype.kcb;
       type = TransactionType.transfer;
       counterparty = 'KCB M-PESA';

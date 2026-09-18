@@ -119,6 +119,30 @@ void main() {
       expect(parsed.type, TransactionType.transfer);
     });
 
+    test('8e. Parse KCB M-PESA Deposit (Safaricom typo 3k)', () {
+      const sms =
+          'UIBFY5S6FJ Confirmed. Ksh3,000.00 transfered to KCB M-PESA account on 11/9/26 at 1:59 PM. New M-PESA balance is Ksh363.42, new KCB M-PESA Saving account balance is Ksh3,000.29.';
+      final parsed = MpesaParser.parse(sms) as ParsedTransaction;
+
+      expect(parsed.subtype, MpesaSubtype.kcb);
+      expect(parsed.type, TransactionType.transfer);
+      expect(parsed.amount, 3000.00);
+      expect(parsed.balance, 363.42);
+      expect(parsed.counterparty, 'KCB M-PESA');
+    });
+
+    test('8f. Parse KCB M-PESA Deposit (Safaricom typo 8k)', () {
+      const sms =
+          'UIGFY6E8QC Confirmed. Ksh8,000.00 transfered to KCB M-PESA account on 16/9/26 at 4:45 PM. New M-PESA balance is Ksh4,173.42, new KCB M-PESA Saving account balance is Ksh8,000.29.';
+      final parsed = MpesaParser.parse(sms) as ParsedTransaction;
+
+      expect(parsed.subtype, MpesaSubtype.kcb);
+      expect(parsed.type, TransactionType.transfer);
+      expect(parsed.amount, 8000.00);
+      expect(parsed.balance, 4173.42);
+      expect(parsed.counterparty, 'KCB M-PESA');
+    });
+
     test('9a. Parse Reversed Transaction', () {
       const sms =
           'PXX0YZE222 Confirmed. Reversal of transaction PXX2ABC123 has been successfully completed on 24/10/21 at 8:00 PM. Ksh1,500.00 is returned to your M-PESA account. New M-PESA balance is Ksh11,500.00.';

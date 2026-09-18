@@ -1,0 +1,7 @@
+﻿adb.exe : logcat: pid '' out of range.
+At line:1 char:1
++ & "C:\Users\Amina\AppData\Local\Android\Sdk\platform-tools\adb.exe" - ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (logcat: pid '' out of range.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
