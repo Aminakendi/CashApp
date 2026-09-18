@@ -90,30 +90,42 @@ class _HomeTabState extends ConsumerState<HomeTab> {
 
   // ── Filtering logic ──────────────────────────────────────────────────────
 
-  List<TransactionEntry> _applyFilters(List<TransactionEntry> all) {
-    var result = all;
+  Stream<List<TransactionEntry>> _watchFilteredTransactions(AppDatabase db) {
+    var query = db.select(db.transactions);
+    
+    drift.Expression<bool>? filterPredicate;
+
+    void addCondition(drift.Expression<bool> condition) {
+      if (filterPredicate == null) {
+        filterPredicate = condition;
+      } else {
+        filterPredicate = filterPredicate! & condition;
+      }
+    }
 
     // 1. Search (counterparty or amount string — AND with other filters)
     if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      result = result.where((t) {
-        final counterparty = (t.counterparty ?? '').toLowerCase();
-        final amountStr = t.amount.toStringAsFixed(2);
-        return counterparty.contains(q) || amountStr.contains(q);
-      }).toList();
+      final q = '%${_searchQuery.toLowerCase()}%';
+      drift.Expression<bool> searchExpr = db.transactions.counterparty.lower().like(q);
+      
+      final numericQuery = double.tryParse(_searchQuery.replaceAll(',', ''));
+      if (numericQuery != null) {
+         searchExpr = searchExpr | db.transactions.amount.equals(numericQuery);
+      } else {
+         searchExpr = searchExpr | db.transactions.amount.cast<String>().like(q);
+      }
+      
+      addCondition(searchExpr);
     }
 
     // 2. Type filter
     if (_filters.type != _TypeFilter.all) {
-      final typeStr = _filters.type.name; // 'income', 'expense', 'transfer'
-      result = result.where((t) => t.type == typeStr).toList();
+      addCondition(db.transactions.type.equals(_filters.type.name));
     }
 
     // 3. Payment method filter
     if (_filters.method != _MethodFilter.all) {
-      final methodStr = _filters.method.name; // 'mpesa', 'cash', 'card'
-      result =
-          result.where((t) => t.paymentMethod == methodStr).toList();
+      addCondition(db.transactions.paymentMethod.equals(_filters.method.name));
     }
 
     // 4. Date filter
@@ -136,15 +148,21 @@ class _HomeTabState extends ConsumerState<HomeTab> {
       }
 
       if (from != null && to != null) {
-        result = result
-            .where((t) =>
-                t.timestamp.isAfter(from!.subtract(const Duration(seconds: 1))) &&
-                t.timestamp.isBefore(to!.add(const Duration(seconds: 1))))
-            .toList();
+        // We use >= and <= to naturally handle boundary inclusivity cleanly.
+        addCondition(
+            db.transactions.timestamp.isBiggerOrEqualValue(from) &
+            db.transactions.timestamp.isSmallerOrEqualValue(to)
+        );
       }
     }
 
-    return result;
+    if (filterPredicate != null) {
+      query.where((t) => filterPredicate!);
+    }
+
+    query.orderBy([(t) => drift.OrderingTerm.desc(t.timestamp)]);
+    query.limit(50); // Keep limit strictly at 50 as requested
+    return query.watch();
   }
 
   List<_DayGroup> _groupByDay(List<TransactionEntry> transactions) {
@@ -506,10 +524,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         ],
       ),
       body: StreamBuilder<List<TransactionEntry>>(
-        stream: (db.select(db.transactions)
-              ..orderBy([(t) => drift.OrderingTerm.desc(t.timestamp)])
-              ..limit(50))
-            .watch(),
+        stream: _watchFilteredTransactions(db),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -518,8 +533,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          final allTx = snapshot.data ?? [];
-          final filtered = _applyFilters(allTx);
+          final filtered = snapshot.data ?? [];
 
           if (filtered.isEmpty) {
             return Center(
@@ -530,7 +544,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       color: AppTheme.textDisabled, size: 48),
                   const SizedBox(height: 12),
                   Text(
-                    allTx.isEmpty
+                    (!(_searchQuery.isNotEmpty || _filters.type != _TypeFilter.all || _filters.method != _MethodFilter.all || _filters.date != _DateFilter.all) && filtered.isEmpty)
                         ? 'No transactions yet.\nAdd your first expense.'
                         : 'No results match your search or filters.',
                     textAlign: TextAlign.center,

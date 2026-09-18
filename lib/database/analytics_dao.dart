@@ -21,7 +21,6 @@ class AnalyticsDao extends DatabaseAccessor<AppDatabase> with _$AnalyticsDaoMixi
       ..where(
         transactions.timestamp.isBetweenValues(start, end) &
         transactions.type.equals('expense') &
-        transactions.type.isNotValue('transfer') &
         transactions.categoryId.equals(categoryId)
       );
 
@@ -97,8 +96,7 @@ class AnalyticsDao extends DatabaseAccessor<AppDatabase> with _$AnalyticsDaoMixi
       ..addColumns([amountSum])
       ..where(
         transactions.timestamp.isBetweenValues(start, end) &
-        transactions.type.equals('expense') &
-        transactions.type.isNotValue('transfer')
+        transactions.type.equals('expense')
       );
 
     final result = await query.getSingle();
@@ -116,8 +114,7 @@ class AnalyticsDao extends DatabaseAccessor<AppDatabase> with _$AnalyticsDaoMixi
       ..addColumns([transactions.categoryId, amountSum])
       ..where(
         transactions.timestamp.isBetweenValues(start, end) &
-        transactions.type.equals('expense') &
-        transactions.type.isNotValue('transfer')
+        transactions.type.equals('expense')
       )
       ..groupBy([transactions.categoryId]);
 
@@ -135,6 +132,36 @@ class AnalyticsDao extends DatabaseAccessor<AppDatabase> with _$AnalyticsDaoMixi
         totalSpend: row.read(amountSum) ?? 0.0,
       );
     }).toList();
+  }
+
+  /// Watch expenses grouped by category for a specific month
+  Stream<List<CategorySpend>> watchCategorySpend(int year, int month) {
+    final start = DateTime(year, month, 1);
+    final end = DateTime(year, month + 1, 1).subtract(const Duration(milliseconds: 1));
+
+    final amountSum = transactions.amount.sum();
+    
+    final query = selectOnly(transactions)
+      ..addColumns([transactions.categoryId, amountSum])
+      ..where(
+        transactions.timestamp.isBetweenValues(start, end) &
+        transactions.type.equals('expense')
+      )
+      ..groupBy([transactions.categoryId]);
+
+    return query.watch().asyncMap((rows) async {
+      final allCategories = await select(categories).get();
+      final categoryMap = {for (var c in allCategories) c.id: c.name};
+
+      return rows.map((row) {
+        final catId = row.read(transactions.categoryId);
+        return CategorySpend(
+          categoryId: catId,
+          categoryName: catId != null ? (categoryMap[catId] ?? 'Unknown') : 'Uncategorized',
+          totalSpend: row.read(amountSum) ?? 0.0,
+        );
+      }).toList();
+    });
   }
 
   /// Find potential wasted spend: e.g., Counterparties with 3+ expenses under Ksh 300

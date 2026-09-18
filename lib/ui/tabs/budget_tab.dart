@@ -141,22 +141,26 @@ class _BudgetTabState extends ConsumerState<BudgetTab> {
         backgroundColor: AppTheme.surface,
         elevation: 0,
       ),
-      body: FutureBuilder(
-        future: Future.wait([
-          db.select(db.categories).get(),
-          db.analyticsDao.getCategorySpend(_currentMonth.year, _currentMonth.month),
-        ]),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
+      body: StreamBuilder<List<Category>>(
+        stream: db.select(db.categories).watch(),
+        builder: (context, catSnapshot) {
+          if (catSnapshot.hasError) {
+            return Center(child: Text('Error: ${catSnapshot.error}', style: const TextStyle(color: Colors.white)));
           }
 
-          final data = snapshot.data as List<dynamic>;
-          final categories = data[0] as List<Category>;
-          final categorySpend = data[1] as List<CategorySpend>;
+          return StreamBuilder<List<CategorySpend>>(
+            stream: db.analyticsDao.watchCategorySpend(_currentMonth.year, _currentMonth.month),
+            builder: (context, spendSnapshot) {
+              if (catSnapshot.connectionState == ConnectionState.waiting || 
+                  spendSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (spendSnapshot.hasError) {
+                return Center(child: Text('Error: ${spendSnapshot.error}', style: const TextStyle(color: Colors.white)));
+              }
+
+              final categories = catSnapshot.data ?? [];
+              final categorySpend = spendSnapshot.data ?? [];
 
           // Map spends by category ID
           final spendMap = {for (var s in categorySpend) s.categoryId: s.totalSpend};
@@ -261,6 +265,8 @@ class _BudgetTabState extends ConsumerState<BudgetTab> {
                 }),
               ],
             ],
+          );
+            },
           );
         },
       ),

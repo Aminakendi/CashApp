@@ -91,9 +91,11 @@ class AppDatabase extends _$AppDatabase {
           
           // Check if column already exists due to a previous aborted migration
           final tableInfo = await customSelect("PRAGMA table_info('savings_goals')").get();
-          final hasIconName = tableInfo.any((row) => row.read<String>('name') == 'icon_name');
-          if (!hasIconName) {
-            await m.addColumn(savingsGoals, savingsGoals.iconName);
+          if (tableInfo.isNotEmpty) {
+            final hasIconName = tableInfo.any((row) => row.read<String>('name') == 'icon_name');
+            if (!hasIconName) {
+              await m.addColumn(savingsGoals, savingsGoals.iconName);
+            }
           }
         }
       },
