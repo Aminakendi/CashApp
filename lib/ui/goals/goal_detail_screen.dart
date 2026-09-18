@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../providers/goals_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../database/database.dart';
 import '../widgets/goal_card.dart';
+import 'create_goal_sheet.dart';
 
 class GoalDetailScreen extends ConsumerWidget {
   final int goalId;
@@ -20,6 +22,33 @@ class GoalDetailScreen extends ConsumerWidget {
         backgroundColor: AppTheme.surface,
         title: const Text('Goal Details'),
         elevation: 0,
+        actions: goalAsyncValue.value == null
+            ? null
+            : [
+                IconButton(
+                  icon: const Icon(Icons.edit, color: AppTheme.textSecondary),
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: AppTheme.surface,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      builder: (ctx) => CreateGoalSheet(
+                        existingGoal: goalAsyncValue.value!,
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline,
+                      color: AppTheme.semanticRed),
+                  onPressed: () => _showDeleteConfirmation(
+                      context, ref, goalAsyncValue.value!),
+                ),
+              ],
       ),
       body: goalAsyncValue.when(
         data: (goal) {
@@ -133,6 +162,48 @@ class GoalDetailScreen extends ConsumerWidget {
                 backgroundColor: AppTheme.primaryPink,
               ),
               child: const Text('Add', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref, SavingsGoal goal) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final savedFormatted = NumberFormat('#,##0').format(goal.currentAmount);
+        return AlertDialog(
+          backgroundColor: AppTheme.surface,
+          title: const Text(
+            'Delete Goal?',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            "Delete '${goal.name}'? You've saved Ksh $savedFormatted toward this goal — this cannot be undone.",
+            style: const TextStyle(color: AppTheme.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await ref.read(goalsNotifierProvider).deleteGoal(goal.id);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx); // Close dialog
+                  Navigator.pop(context); // Close detail screen
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.semanticRed,
+              ),
+              child: const Text('Delete', style: TextStyle(color: Colors.white)),
             ),
           ],
         );

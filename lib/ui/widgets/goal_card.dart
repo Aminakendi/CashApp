@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../database/database.dart';
 import '../../theme/app_theme.dart';
+import '../goals/goal_icon_picker.dart';
 
 class GoalCard extends StatelessWidget {
   final SavingsGoal goal;
@@ -13,30 +14,14 @@ class GoalCard extends StatelessWidget {
     required this.onTap,
   });
 
-  IconData _getIconForGoal(String name) {
-    final lower = name.toLowerCase();
-    if (lower.contains('vacation') || lower.contains('trip') || lower.contains('travel') || lower.contains('flight')) {
-      return Icons.flight_takeoff;
+  IconData _resolveIcon() {
+    // User's explicit pick (persisted as hex codePoint) always wins.
+    final stored = goal.iconName;
+    if (stored != null && stored.isNotEmpty) {
+      return GoalIconPicker.iconFromString(stored);
     }
-    if (lower.contains('emergency') || lower.contains('fund')) {
-      return Icons.health_and_safety;
-    }
-    if (lower.contains('car') || lower.contains('vehicle') || lower.contains('auto')) {
-      return Icons.directions_car;
-    }
-    if (lower.contains('house') || lower.contains('home') || lower.contains('rent')) {
-      return Icons.house;
-    }
-    if (lower.contains('fridge') || lower.contains('appliance') || lower.contains('tv')) {
-      return Icons.kitchen;
-    }
-    if (lower.contains('phone') || lower.contains('gadget') || lower.contains('laptop') || lower.contains('macbook')) {
-      return Icons.devices;
-    }
-    if (lower.contains('school') || lower.contains('education') || lower.contains('tuition') || lower.contains('fee')) {
-      return Icons.school;
-    }
-    return Icons.savings; // Default
+    // Fall back to keyword guess for goals created before v5 (iconName == null).
+    return GoalIconPicker.iconForName(goal.name);
   }
 
   String _getTimeRemaining(DateTime? targetDate) {
@@ -44,14 +29,15 @@ class GoalCard extends StatelessWidget {
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final target = DateTime(targetDate.year, targetDate.month, targetDate.day);
-    
+    final target =
+        DateTime(targetDate.year, targetDate.month, targetDate.day);
+
     if (target.isBefore(today)) {
       return 'Overdue';
     } else if (target.isAtSameMomentAs(today)) {
       return 'Due today';
     }
-    
+
     final days = target.difference(today).inDays;
     if (days < 60) {
       return '$days days left';
@@ -63,13 +49,15 @@ class GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(symbol: 'KSh ', decimalDigits: 0);
-    
+    final currencyFormat =
+        NumberFormat.currency(symbol: 'KSh ', decimalDigits: 0);
+
     final currentAmount = goal.currentAmount ?? 0.0;
     final targetAmount = goal.targetAmount;
-    final progress = targetAmount > 0 ? (currentAmount / targetAmount).clamp(0.0, 1.0) : 0.0;
+    final trueProgress = targetAmount > 0 ? (currentAmount / targetAmount) : 0.0;
+    final displayProgress = trueProgress.clamp(0.0, 1.0);
     final remaining = targetAmount - currentAmount;
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: AppTheme.surface,
@@ -92,7 +80,7 @@ class GoalCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      _getIconForGoal(goal.name),
+                      _resolveIcon(),
                       color: AppTheme.primaryPink,
                       size: 24,
                     ),
@@ -127,7 +115,7 @@ class GoalCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${(progress * 100).toStringAsFixed(0)}%',
+                        '${(trueProgress * 100).toStringAsFixed(0)}%',
                         style: const TextStyle(
                           color: AppTheme.primaryPink,
                           fontWeight: FontWeight.bold,
@@ -140,7 +128,7 @@ class GoalCard extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               LinearProgressIndicator(
-                value: progress,
+                value: displayProgress,
                 backgroundColor: Colors.white12,
                 color: AppTheme.primaryPink,
                 minHeight: 8,
@@ -163,7 +151,7 @@ class GoalCard extends StatelessWidget {
                       Text(
                         currencyFormat.format(currentAmount),
                         style: const TextStyle(
-                          color: AppTheme.primaryPink, // Changed from semanticGreen
+                          color: AppTheme.primaryPink,
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
@@ -195,7 +183,8 @@ class GoalCard extends StatelessWidget {
               if (remaining > 0) ...[
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(4),

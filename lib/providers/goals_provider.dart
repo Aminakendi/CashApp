@@ -22,12 +22,18 @@ class GoalsNotifier {
 
   GoalsNotifier(this._db);
 
-  Future<void> createGoal(String name, double targetAmount, DateTime targetDate) async {
+  Future<void> createGoal(
+    String name,
+    double targetAmount,
+    DateTime targetDate, {
+    String? iconName,
+  }) async {
     await _db.into(_db.savingsGoals).insert(
       SavingsGoalsCompanion.insert(
         name: name,
         targetAmount: targetAmount,
         targetDate: targetDate,
+        iconName: Value(iconName),
       ),
     );
   }
@@ -38,5 +44,26 @@ class GoalsNotifier {
         currentAmount: _db.savingsGoals.currentAmount + Variable<double>(amount),
       ),
     );
+  }
+
+  Future<void> updateGoal(
+    int goalId,
+    String name,
+    double targetAmount,
+    DateTime targetDate, {
+    String? iconName,
+  }) async {
+    await (_db.update(_db.savingsGoals)..where((g) => g.id.equals(goalId))).write(
+      SavingsGoalsCompanion(
+        name: Value(name),
+        targetAmount: Value(targetAmount),
+        targetDate: Value(targetDate),
+        iconName: Value(iconName),
+      ),
+    );
+  }
+
+  Future<void> deleteGoal(int goalId) async {
+    await (_db.delete(_db.savingsGoals)..where((g) => g.id.equals(goalId))).go();
   }
 }

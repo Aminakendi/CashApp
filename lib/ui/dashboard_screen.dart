@@ -9,7 +9,6 @@ import 'manual_entry_screen.dart';
 import 'permission_onboarding_dialog.dart';
 import '../services/notification_service.dart';
 import '../services/sms_sync_manager.dart';
-import '../services/backup_service.dart';
 
 import 'tabs/home_tab.dart';
 import 'tabs/analytics_tab.dart';
@@ -111,58 +110,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('M-Pesa Tracker'),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.settings_outlined),
-            onSelected: (value) async {
-              if (value == 'export') {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Export Data'),
-                    content: const Text(
-                        'This will export your transactions, categories, savings goals, and budget settings to a JSON file.\n\nWARNING: The exported file is UNENCRYPTED and contains sensitive financial data. Keep it safe.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('CANCEL'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('EXPORT', style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirmed == true) {
-                  final db = ref.read(dbProvider);
-                  // Use BackupService to export data
-                  await BackupService.exportDataToJson(db);
-                }
-              } else if (value == 'settings') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Settings coming soon')),
-                );
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'export',
-                child: Text('Export Data (JSON)'),
-              ),
-              const PopupMenuItem(
-                value: 'settings',
-                child: Text('Settings'),
-              ),
-            ],
-          ),
-        ],
-      ),
       body: !_isSeeded 
           ? const Center(child: CircularProgressIndicator())
           : IndexedStack(

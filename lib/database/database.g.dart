@@ -965,9 +965,15 @@ class $SavingsGoalsTable extends SavingsGoals
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
+  static const VerificationMeta _iconNameMeta =
+      const VerificationMeta('iconName');
+  @override
+  late final GeneratedColumn<String> iconName = GeneratedColumn<String>(
+      'icon_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, name, targetAmount, currentAmount, targetDate, createdAt];
+      [id, name, targetAmount, currentAmount, targetDate, createdAt, iconName];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1013,6 +1019,10 @@ class $SavingsGoalsTable extends SavingsGoals
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
+    if (data.containsKey('icon_name')) {
+      context.handle(_iconNameMeta,
+          iconName.isAcceptableOrUnknown(data['icon_name']!, _iconNameMeta));
+    }
     return context;
   }
 
@@ -1034,6 +1044,8 @@ class $SavingsGoalsTable extends SavingsGoals
           .read(DriftSqlType.dateTime, data['${effectivePrefix}target_date'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      iconName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}icon_name']),
     );
   }
 
@@ -1050,13 +1062,15 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
   final double currentAmount;
   final DateTime targetDate;
   final DateTime createdAt;
+  final String? iconName;
   const SavingsGoal(
       {required this.id,
       required this.name,
       required this.targetAmount,
       required this.currentAmount,
       required this.targetDate,
-      required this.createdAt});
+      required this.createdAt,
+      this.iconName});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1066,6 +1080,9 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
     map['current_amount'] = Variable<double>(currentAmount);
     map['target_date'] = Variable<DateTime>(targetDate);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || iconName != null) {
+      map['icon_name'] = Variable<String>(iconName);
+    }
     return map;
   }
 
@@ -1077,6 +1094,9 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
       currentAmount: Value(currentAmount),
       targetDate: Value(targetDate),
       createdAt: Value(createdAt),
+      iconName: iconName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(iconName),
     );
   }
 
@@ -1090,6 +1110,7 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
       currentAmount: serializer.fromJson<double>(json['currentAmount']),
       targetDate: serializer.fromJson<DateTime>(json['targetDate']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      iconName: serializer.fromJson<String?>(json['iconName']),
     );
   }
   @override
@@ -1102,6 +1123,7 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
       'currentAmount': serializer.toJson<double>(currentAmount),
       'targetDate': serializer.toJson<DateTime>(targetDate),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'iconName': serializer.toJson<String?>(iconName),
     };
   }
 
@@ -1111,7 +1133,8 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
           double? targetAmount,
           double? currentAmount,
           DateTime? targetDate,
-          DateTime? createdAt}) =>
+          DateTime? createdAt,
+          Value<String?> iconName = const Value.absent()}) =>
       SavingsGoal(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -1119,6 +1142,7 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
         currentAmount: currentAmount ?? this.currentAmount,
         targetDate: targetDate ?? this.targetDate,
         createdAt: createdAt ?? this.createdAt,
+        iconName: iconName.present ? iconName.value : this.iconName,
       );
   SavingsGoal copyWithCompanion(SavingsGoalsCompanion data) {
     return SavingsGoal(
@@ -1133,6 +1157,7 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
       targetDate:
           data.targetDate.present ? data.targetDate.value : this.targetDate,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      iconName: data.iconName.present ? data.iconName.value : this.iconName,
     );
   }
 
@@ -1144,14 +1169,15 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
           ..write('targetAmount: $targetAmount, ')
           ..write('currentAmount: $currentAmount, ')
           ..write('targetDate: $targetDate, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('iconName: $iconName')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, targetAmount, currentAmount, targetDate, createdAt);
+  int get hashCode => Object.hash(
+      id, name, targetAmount, currentAmount, targetDate, createdAt, iconName);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1161,7 +1187,8 @@ class SavingsGoal extends DataClass implements Insertable<SavingsGoal> {
           other.targetAmount == this.targetAmount &&
           other.currentAmount == this.currentAmount &&
           other.targetDate == this.targetDate &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.iconName == this.iconName);
 }
 
 class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
@@ -1171,6 +1198,7 @@ class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
   final Value<double> currentAmount;
   final Value<DateTime> targetDate;
   final Value<DateTime> createdAt;
+  final Value<String?> iconName;
   const SavingsGoalsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -1178,6 +1206,7 @@ class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
     this.currentAmount = const Value.absent(),
     this.targetDate = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.iconName = const Value.absent(),
   });
   SavingsGoalsCompanion.insert({
     this.id = const Value.absent(),
@@ -1186,6 +1215,7 @@ class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
     this.currentAmount = const Value.absent(),
     required DateTime targetDate,
     this.createdAt = const Value.absent(),
+    this.iconName = const Value.absent(),
   })  : name = Value(name),
         targetAmount = Value(targetAmount),
         targetDate = Value(targetDate);
@@ -1196,6 +1226,7 @@ class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
     Expression<double>? currentAmount,
     Expression<DateTime>? targetDate,
     Expression<DateTime>? createdAt,
+    Expression<String>? iconName,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1204,6 +1235,7 @@ class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
       if (currentAmount != null) 'current_amount': currentAmount,
       if (targetDate != null) 'target_date': targetDate,
       if (createdAt != null) 'created_at': createdAt,
+      if (iconName != null) 'icon_name': iconName,
     });
   }
 
@@ -1213,7 +1245,8 @@ class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
       Value<double>? targetAmount,
       Value<double>? currentAmount,
       Value<DateTime>? targetDate,
-      Value<DateTime>? createdAt}) {
+      Value<DateTime>? createdAt,
+      Value<String?>? iconName}) {
     return SavingsGoalsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -1221,6 +1254,7 @@ class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
       currentAmount: currentAmount ?? this.currentAmount,
       targetDate: targetDate ?? this.targetDate,
       createdAt: createdAt ?? this.createdAt,
+      iconName: iconName ?? this.iconName,
     );
   }
 
@@ -1245,6 +1279,9 @@ class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (iconName.present) {
+      map['icon_name'] = Variable<String>(iconName.value);
+    }
     return map;
   }
 
@@ -1256,7 +1293,8 @@ class SavingsGoalsCompanion extends UpdateCompanion<SavingsGoal> {
           ..write('targetAmount: $targetAmount, ')
           ..write('currentAmount: $currentAmount, ')
           ..write('targetDate: $targetDate, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('iconName: $iconName')
           ..write(')'))
         .toString();
   }
@@ -2515,6 +2553,7 @@ typedef $$SavingsGoalsTableCreateCompanionBuilder = SavingsGoalsCompanion
   Value<double> currentAmount,
   required DateTime targetDate,
   Value<DateTime> createdAt,
+  Value<String?> iconName,
 });
 typedef $$SavingsGoalsTableUpdateCompanionBuilder = SavingsGoalsCompanion
     Function({
@@ -2524,6 +2563,7 @@ typedef $$SavingsGoalsTableUpdateCompanionBuilder = SavingsGoalsCompanion
   Value<double> currentAmount,
   Value<DateTime> targetDate,
   Value<DateTime> createdAt,
+  Value<String?> iconName,
 });
 
 class $$SavingsGoalsTableFilterComposer
@@ -2552,6 +2592,9 @@ class $$SavingsGoalsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get iconName => $composableBuilder(
+      column: $table.iconName, builder: (column) => ColumnFilters(column));
 }
 
 class $$SavingsGoalsTableOrderingComposer
@@ -2582,6 +2625,9 @@ class $$SavingsGoalsTableOrderingComposer
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get iconName => $composableBuilder(
+      column: $table.iconName, builder: (column) => ColumnOrderings(column));
 }
 
 class $$SavingsGoalsTableAnnotationComposer
@@ -2610,6 +2656,9 @@ class $$SavingsGoalsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get iconName =>
+      $composableBuilder(column: $table.iconName, builder: (column) => column);
 }
 
 class $$SavingsGoalsTableTableManager extends RootTableManager<
@@ -2644,6 +2693,7 @@ class $$SavingsGoalsTableTableManager extends RootTableManager<
             Value<double> currentAmount = const Value.absent(),
             Value<DateTime> targetDate = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> iconName = const Value.absent(),
           }) =>
               SavingsGoalsCompanion(
             id: id,
@@ -2652,6 +2702,7 @@ class $$SavingsGoalsTableTableManager extends RootTableManager<
             currentAmount: currentAmount,
             targetDate: targetDate,
             createdAt: createdAt,
+            iconName: iconName,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -2660,6 +2711,7 @@ class $$SavingsGoalsTableTableManager extends RootTableManager<
             Value<double> currentAmount = const Value.absent(),
             required DateTime targetDate,
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> iconName = const Value.absent(),
           }) =>
               SavingsGoalsCompanion.insert(
             id: id,
@@ -2668,6 +2720,7 @@ class $$SavingsGoalsTableTableManager extends RootTableManager<
             currentAmount: currentAmount,
             targetDate: targetDate,
             createdAt: createdAt,
+            iconName: iconName,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

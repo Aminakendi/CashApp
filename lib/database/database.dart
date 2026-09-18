@@ -23,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Exposed as a constant so the LazyDatabase factory can read it from a raw
   /// sqlite3 connection (before Drift opens) to decide whether a backup is needed.
-  static const int kSchemaVersion = 4;
+  static const int kSchemaVersion = 5;
 
   @override
   int get schemaVersion => kSchemaVersion;
@@ -82,6 +82,18 @@ class AppDatabase extends _$AppDatabase {
               'FK violations detected after v4 categories migration: '
               '${violations.length} row(s) affected.',
             );
+          }
+        }
+        if (from < 5) {
+          // Add the nullable iconName column to savings_goals.
+          // Existing goals will have iconName = null and fall back to
+          // keyword-based icon selection in GoalCard.
+          
+          // Check if column already exists due to a previous aborted migration
+          final tableInfo = await customSelect("PRAGMA table_info('savings_goals')").get();
+          final hasIconName = tableInfo.any((row) => row.read<String>('name') == 'icon_name');
+          if (!hasIconName) {
+            await m.addColumn(savingsGoals, savingsGoals.iconName);
           }
         }
       },

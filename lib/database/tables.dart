@@ -39,6 +39,9 @@ class SavingsGoals extends Table {
   RealColumn get currentAmount => real().withDefault(const Constant(0.0))();
   DateTimeColumn get targetDate => dateTime()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  // Stores the selected icon as a hex codePoint string (e.g. "e548").
+  // Null for goals created before v5 — falls back to keyword-guess in GoalCard.
+  TextColumn get iconName => text().nullable()();
 }
 
 @DataClassName('CategoryRule')
