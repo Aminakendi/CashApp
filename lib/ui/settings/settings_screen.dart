@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mpesa_tracker/providers/database_provider.dart';
+import 'package:mpesa_tracker/providers/db_provider.dart';
 import 'package:mpesa_tracker/services/backup_service.dart';
 import 'package:mpesa_tracker/ui/settings/category_management_screen.dart';
 

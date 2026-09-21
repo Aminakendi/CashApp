@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpesa_tracker/database/database.dart';
-import 'package:mpesa_tracker/providers/database_provider.dart';
-import 'package:mpesa_tracker/theme/app_theme.dart';
+import 'package:mpesa_tracker/providers/db_provider.dart';
 
 class CategoryReassignSheet extends ConsumerStatefulWidget {
   final Category category;

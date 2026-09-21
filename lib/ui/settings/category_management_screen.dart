@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpesa_tracker/database/database.dart';
-import 'package:mpesa_tracker/providers/database_provider.dart';
+import 'package:mpesa_tracker/providers/db_provider.dart';
 import 'package:mpesa_tracker/ui/settings/category_edit_sheet.dart';
 import 'package:mpesa_tracker/ui/settings/category_reassign_sheet.dart';
 
