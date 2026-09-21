@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 import 'theme/app_theme.dart';
 import 'providers/db_provider.dart';
-import 'database/database.dart';
+
 import 'services/sms_sync_manager.dart';
 import 'services/notification_service.dart';
 import 'ui/dashboard_screen.dart';

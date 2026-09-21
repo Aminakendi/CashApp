@@ -52,7 +52,7 @@ class GoalCard extends StatelessWidget {
     final currencyFormat =
         NumberFormat.currency(symbol: 'KSh ', decimalDigits: 0);
 
-    final currentAmount = goal.currentAmount ?? 0.0;
+    final currentAmount = goal.currentAmount;
     final targetAmount = goal.targetAmount;
     final trueProgress = targetAmount > 0 ? (currentAmount / targetAmount) : 0.0;
     final displayProgress = trueProgress.clamp(0.0, 1.0);

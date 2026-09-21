@@ -5,6 +5,7 @@ import 'package:mpesa_tracker/database/database.dart';
 import 'package:mpesa_tracker/providers/db_provider.dart';
 import 'package:mpesa_tracker/theme/app_theme.dart';
 import 'package:mpesa_tracker/ui/settings/category_icon_picker.dart';
+import 'package:mpesa_tracker/ui/settings/category_icon_resolver.dart';
 
 class CategoryEditSheet extends ConsumerStatefulWidget {
   final Category? category; // If null, adding a new category
@@ -18,7 +19,7 @@ class CategoryEditSheet extends ConsumerStatefulWidget {
 class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
   late TextEditingController _nameController;
   late TextEditingController _budgetController;
-  late String _selectedIconHex;
+  late String _selectedIconName;
 
   bool get _isEditing => widget.category != null;
   bool get _isDefault => _isEditing && widget.category!.id < 1000;
@@ -31,7 +32,7 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
       text: widget.category?.monthlyBudget?.toStringAsFixed(0) ?? '',
     );
     // Default to shopping_bag if none
-    _selectedIconHex = widget.category?.icon ?? Icons.shopping_bag.codePoint.toRadixString(16);
+    _selectedIconName = widget.category?.icon ?? 'category';
   }
 
   @override
@@ -46,11 +47,12 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
     
     final result = await showModalBottomSheet<String>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => const CategoryIconPicker(),
     );
     if (result != null) {
       setState(() {
-        _selectedIconHex = result;
+        _selectedIconName = result;
       });
     }
   }
@@ -68,14 +70,14 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
       if (_isEditing) {
         final updated = widget.category!.copyWith(
           name: _isDefault ? widget.category!.name : name, // Preserve default name
-          icon: _isDefault ? widget.category!.icon : _selectedIconHex, // Preserve default icon
+          icon: _isDefault ? widget.category!.icon : _selectedIconName, // Preserve default icon
           monthlyBudget: drift.Value(budget),
         );
         await db.categoryDao.updateCategory(updated);
       } else {
         final newCat = CategoriesCompanion.insert(
           name: name,
-          icon: _selectedIconHex,
+          icon: _selectedIconName,
           monthlyBudget: drift.Value(budget),
         );
         await db.categoryDao.insertCategory(newCat);
@@ -129,7 +131,7 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
                     border: Border.all(color: Colors.white24),
                   ),
                   child: Icon(
-                    IconData(int.parse(_selectedIconHex, radix: 16), fontFamily: 'MaterialIcons'),
+                    CategoryIconResolver.resolve(_selectedIconName),
                     size: 32,
                     color: _isDefault ? Colors.grey : AppTheme.primaryPink,
                   ),

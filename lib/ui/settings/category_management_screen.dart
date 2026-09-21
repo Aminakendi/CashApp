@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpesa_tracker/database/database.dart';
+import 'package:mpesa_tracker/theme/app_theme.dart';
+import 'package:mpesa_tracker/ui/settings/category_icon_resolver.dart';
 import 'package:mpesa_tracker/providers/db_provider.dart';
 import 'package:mpesa_tracker/ui/settings/category_edit_sheet.dart';
 import 'package:mpesa_tracker/ui/settings/category_reassign_sheet.dart';
@@ -52,42 +54,50 @@ class CategoryManagementScreen extends ConsumerWidget {
           
           final categories = snapshot.data!;
           
-          return ListView.builder(
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              final isDefault = category.id < 1000;
-              
-              return ListTile(
-                leading: CircleAvatar(
+          final defaultCategories = categories.where((c) => c.id < 1000).toList()
+            ..sort((a, b) => a.name.compareTo(b.name));
+          final customCategories = categories.where((c) => c.id >= 1000).toList()
+            ..sort((a, b) => a.name.compareTo(b.name));
+          
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 96), // Prevents FAB overlap
+            children: [
+              if (defaultCategories.isNotEmpty) ...[
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
                   child: Text(
-                    String.fromCharCode(int.parse(category.icon, radix: 16)),
-                    style: const TextStyle(fontFamily: 'MaterialIcons'),
+                    'DEFAULT CATEGORIES', 
+                    style: TextStyle(
+                      color: Colors.grey, 
+                      fontSize: 12, 
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    )
                   ),
                 ),
-                title: Text(category.name),
-                subtitle: Text(category.monthlyBudget != null 
-                    ? 'Budget: Ksh ${category.monthlyBudget!.toStringAsFixed(0)}' 
-                    : 'No budget set'),
-                trailing: isDefault 
-                    ? const Icon(Icons.lock_outline, size: 20)
-                    : IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        onPressed: () => _deleteCategory(context, ref, category),
-                      ),
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (ctx) => CategoryEditSheet(category: category),
-                  );
-                },
-              );
-            },
+                ...defaultCategories.map((c) => _buildCategoryTile(context, ref, c, true)),
+              ],
+              if (customCategories.isNotEmpty) ...[
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                  child: Text(
+                    'YOUR CATEGORIES', 
+                    style: TextStyle(
+                      color: Colors.grey, 
+                      fontSize: 12, 
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    )
+                  ),
+                ),
+                ...customCategories.map((c) => _buildCategoryTile(context, ref, c, false)),
+              ],
+            ],
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'category_fab',
         onPressed: () {
           showModalBottomSheet(
             context: context,
@@ -97,6 +107,35 @@ class CategoryManagementScreen extends ConsumerWidget {
         },
         child: const Icon(Icons.add),
       ),
+    );
+  }
+
+  Widget _buildCategoryTile(BuildContext context, WidgetRef ref, Category category, bool isDefault) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: Colors.white.withOpacity(0.05),
+        child: Icon(
+          CategoryIconResolver.resolve(category.icon),
+          color: const Color(0xFFFF2B5E), // AppTheme.primaryPink
+        ),
+      ),
+      title: Text(category.name),
+      subtitle: Text(category.monthlyBudget != null 
+          ? 'Budget: Ksh ${category.monthlyBudget!.toStringAsFixed(0)}' 
+          : 'No budget set'),
+      trailing: isDefault 
+          ? const Icon(Icons.lock_outline, size: 20, color: Colors.white38)
+          : IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: () => _deleteCategory(context, ref, category),
+            ),
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          builder: (ctx) => CategoryEditSheet(category: category),
+        );
+      },
     );
   }
 }

@@ -16,7 +16,7 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         children: [
           ListTile(
-            leading: const Icon(Icons.category),
+            leading: const Icon(Icons.label_outline),
             title: const Text('Manage Categories'),
             subtitle: const Text('Add, edit, or delete custom categories'),
             trailing: const Icon(Icons.chevron_right),

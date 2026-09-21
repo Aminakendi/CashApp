@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpesa_tracker/database/database.dart';
+import 'package:mpesa_tracker/theme/app_theme.dart';
+import 'package:mpesa_tracker/ui/settings/category_icon_resolver.dart';
 import 'package:mpesa_tracker/providers/db_provider.dart';
 
 class CategoryReassignSheet extends ConsumerStatefulWidget {
@@ -93,9 +95,9 @@ class _CategoryReassignSheetState extends ConsumerState<CategoryReassignSheet> {
                     value: c.id,
                     child: Row(
                       children: [
-                        Text(
-                          String.fromCharCode(int.parse(c.icon, radix: 16)),
-                          style: const TextStyle(fontFamily: 'MaterialIcons'),
+                        Icon(
+                          CategoryIconResolver.resolve(c.icon),
+                          size: 20,
                         ),
                         const SizedBox(width: 8),
                         Text(c.name),

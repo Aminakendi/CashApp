@@ -1,48 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:mpesa_tracker/ui/settings/category_icon_resolver.dart';
 
-class CategoryIconPicker extends StatelessWidget {
+class CategoryIconPicker extends StatefulWidget {
   const CategoryIconPicker({super.key});
 
-  // A distinct, broader set of icons suitable for categorization
-  static const List<IconData> categoryIcons = [
-    Icons.shopping_cart,
-    Icons.fastfood,
-    Icons.local_cafe,
-    Icons.restaurant,
-    Icons.directions_car,
-    Icons.local_gas_station,
-    Icons.flight,
-    Icons.home,
-    Icons.water_drop,
-    Icons.electric_bolt,
-    Icons.wifi,
-    Icons.phone_android,
-    Icons.movie,
-    Icons.sports_esports,
-    Icons.fitness_center,
-    Icons.medical_services,
-    Icons.pets,
-    Icons.school,
-    Icons.menu_book,
-    Icons.work,
-    Icons.account_balance,
-    Icons.attach_money,
-    Icons.volunteer_activism,
-    Icons.shopping_bag,
-    Icons.checkroom,
-    Icons.child_care,
-    Icons.celebration,
-    Icons.card_giftcard,
-    Icons.spa,
-    Icons.chair,
-  ];
+  @override
+  State<CategoryIconPicker> createState() => _CategoryIconPickerState();
+}
+
+class _CategoryIconPickerState extends State<CategoryIconPicker> {
+  final TextEditingController _searchController = TextEditingController();
+  List<MapEntry<String, IconData>> _filteredIcons = [];
+  
+  final List<MapEntry<String, IconData>> _allIcons = 
+      CategoryIconResolver.iconMap.entries.toList();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredIcons = _allIcons;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterIcons(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredIcons = _allIcons;
+      } else {
+        final lowerQuery = query.toLowerCase();
+        _filteredIcons = _allIcons.where((entry) {
+          final iconName = entry.key;
+          // Match against the exact icon name first
+          if (iconName.toLowerCase().contains(lowerQuery)) return true;
+          // Then match against the keywords
+          final keywords = CategoryIconResolver.keywordMap[iconName] ?? [];
+          return keywords.any((k) => k.toLowerCase().contains(lowerQuery));
+        }).toList();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      padding: EdgeInsets.only(
+        left: 16.0,
+        right: 16.0,
+        top: 16.0,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+      ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
@@ -50,21 +63,33 @@ class CategoryIconPicker extends StatelessWidget {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          Flexible(
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search icons (e.g. gym, food)',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+            onChanged: _filterIcons,
+          ),
+          const SizedBox(height: 16),
+          Expanded(
             child: GridView.builder(
-              shrinkWrap: true,
-              itemCount: categoryIcons.length,
+              itemCount: _filteredIcons.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 5,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
               itemBuilder: (context, index) {
-                final iconData = categoryIcons[index];
+                final entry = _filteredIcons[index];
                 return InkWell(
                   onTap: () {
-                    // Return the hex string of the codePoint
-                    Navigator.pop(context, iconData.codePoint.toRadixString(16));
+                    // Return the string name of the icon
+                    Navigator.pop(context, entry.key);
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
@@ -72,7 +97,7 @@ class CategoryIconPicker extends StatelessWidget {
                       color: Colors.white.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(iconData, size: 32),
+                    child: Icon(entry.value, size: 32),
                   ),
                 );
               },
