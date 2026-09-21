@@ -10,12 +10,13 @@ import 'tables.dart';
 import 'key_store.dart';
 
 import 'analytics_dao.dart';
+import 'category_dao.dart';
 
 part 'database.g.dart';
 
 @DriftDatabase(
   tables: [Transactions, Categories, SavingsGoals, CategoryRules, UnparsedMessages, BudgetNotifications],
-  daos: [AnalyticsDao],
+  daos: [AnalyticsDao, CategoryDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());

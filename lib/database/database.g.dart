@@ -2094,6 +2094,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $BudgetNotificationsTable budgetNotifications =
       $BudgetNotificationsTable(this);
   late final AnalyticsDao analyticsDao = AnalyticsDao(this as AppDatabase);
+  late final CategoryDao categoryDao = CategoryDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
