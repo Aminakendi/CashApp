@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mpesa_tracker/ui/settings/settings_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:drift/drift.dart' as drift;
@@ -476,50 +477,14 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 ),
             ],
           ),
-          // Settings gear — moved verbatim from DashboardScreen, no behavior change
-          PopupMenuButton<String>(
+          IconButton(
             icon: const Icon(Icons.settings_outlined),
-            onSelected: (value) async {
-              if (value == 'export') {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Export Data'),
-                    content: const Text(
-                        'This will export your transactions, categories, savings goals, and budget settings to a JSON file.\n\nWARNING: The exported file is UNENCRYPTED and contains sensitive financial data. Keep it safe.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('CANCEL'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('EXPORT',
-                            style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirmed == true) {
-                  final dbInstance = ref.read(dbProvider);
-                  await BackupService.exportDataToJson(dbInstance);
-                }
-              } else if (value == 'settings') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Settings coming soon')),
-                );
-              }
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'export',
-                child: Text('Export Data (JSON)'),
-              ),
-              const PopupMenuItem(
-                value: 'settings',
-                child: Text('Settings'),
-              ),
-            ],
           ),
         ],
       ),
