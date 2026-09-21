@@ -54,7 +54,7 @@ class UnparsedTransaction extends ParseResult {
 
 class MpesaParser {
   static final RegExp _codeRegExp = RegExp(r'^([A-Z0-9]{10})\s*confirmed\.', caseSensitive: false);
-  static final RegExp _amountRegExp = RegExp(r'(?:confirmed\.|received|withdraw|bought|transaction of|pm\.|am\.)\s*ksh\s*([\d,]+\.\d{2})', caseSensitive: false);
+  static final RegExp _amountRegExp = RegExp(r'(?:confirmed\.|received|withdraw|bought|transaction of|pm\.|am\.|transferred|transfered)\s*ksh\s*([\d,]+\.\d{2})', caseSensitive: false);
   static final RegExp _balanceRegExp = RegExp(r'(?:new\s+)?m-pesa balance is\s*ksh\s*([\d,]+\.\d{2})', caseSensitive: false);
   static final RegExp _dateRegExp = RegExp(r'on\s+(\d{1,2}/\d{1,2}/\d{2,4})\s+at\s+(\d{1,2}:\d{2}\s*[APM]{2})', caseSensitive: false);
 
@@ -132,7 +132,7 @@ class MpesaParser {
       subtype = MpesaSubtype.kcb;
       type = TransactionType.transfer;
       counterparty = 'KCB M-PESA';
-    } else if (lowerSms.contains('from kcb m-pesa')) {
+    } else if (lowerSms.contains('from kcb m-pesa') || lowerSms.contains('from your kcb m-pesa')) {
       subtype = MpesaSubtype.kcb;
       type = TransactionType.transfer;
       counterparty = 'KCB M-PESA';
