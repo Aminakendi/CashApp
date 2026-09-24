@@ -722,7 +722,7 @@ class _TransactionRow extends StatelessWidget {
             ),
           ),
           title: Text(tx.counterparty ?? tx.note ?? 'Unknown'),
-          subtitle: Text('${dateFormatter.format(tx.timestamp)} • ${tx.source}'),
+          subtitle: Text(dateFormatter.format(tx.timestamp)),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

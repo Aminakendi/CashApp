@@ -126,14 +126,14 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: _isDefault ? Colors.grey : AppTheme.primaryPink,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.white24),
                   ),
                   child: Icon(
                     CategoryIconResolver.resolve(_selectedIconName),
                     size: 32,
-                    color: _isDefault ? Colors.grey : AppTheme.primaryPink,
+                    color: AppTheme.background,
                   ),
                 ),
               ),

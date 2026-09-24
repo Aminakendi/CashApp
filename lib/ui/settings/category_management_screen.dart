@@ -113,10 +113,10 @@ class CategoryManagementScreen extends ConsumerWidget {
   Widget _buildCategoryTile(BuildContext context, WidgetRef ref, Category category, bool isDefault) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: Colors.white.withOpacity(0.05),
+        backgroundColor: AppTheme.primaryPink,
         child: Icon(
           CategoryIconResolver.resolve(category.icon),
-          color: const Color(0xFFFF2B5E), // AppTheme.primaryPink
+          color: AppTheme.background,
         ),
       ),
       title: Text(category.name),
