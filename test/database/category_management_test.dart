@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/native.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:mpesa_tracker/database/database.dart';
-import 'package:mpesa_tracker/database/tables.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

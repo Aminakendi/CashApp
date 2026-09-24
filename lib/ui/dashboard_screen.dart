@@ -91,7 +91,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (_initializationError != null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('M-Pesa Tracker'),
+          title: const Text('M-Tracker'),
           elevation: 0,
           backgroundColor: Colors.transparent,
         ),

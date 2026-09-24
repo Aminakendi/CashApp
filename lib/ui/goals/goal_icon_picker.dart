@@ -18,16 +18,16 @@ class GoalIconPicker extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const List<_IconOption> options = [
-    _IconOption(Icons.flight_takeoff, 'Vacation'),
-    _IconOption(Icons.kitchen, 'Appliance'),
-    _IconOption(Icons.checkroom, 'Clothes'),
-    _IconOption(Icons.house, 'Home'),
-    _IconOption(Icons.directions_car, 'Car'),
-    _IconOption(Icons.card_giftcard, 'Gift'),
-    _IconOption(Icons.phone_android, 'Phone'),
-    _IconOption(Icons.school, 'Education'),
-    _IconOption(Icons.flag, 'Other'),
+  static const List<GoalIconOption> options = [
+    GoalIconOption(Icons.flight_takeoff, 'Vacation'),
+    GoalIconOption(Icons.kitchen, 'Appliance'),
+    GoalIconOption(Icons.checkroom, 'Clothes'),
+    GoalIconOption(Icons.house, 'Home'),
+    GoalIconOption(Icons.directions_car, 'Car'),
+    GoalIconOption(Icons.card_giftcard, 'Gift'),
+    GoalIconOption(Icons.phone_android, 'Phone'),
+    GoalIconOption(Icons.school, 'Education'),
+    GoalIconOption(Icons.flag, 'Other'),
   ];
 
   /// Returns the best-guess icon for [name] using keyword matching.
@@ -87,8 +87,10 @@ class GoalIconPicker extends StatelessWidget {
       icon.codePoint.toRadixString(16);
 
   /// Deserialises a hex string back to an [IconData].
-  static IconData iconFromString(String hex) =>
-      IconData(int.parse(hex, radix: 16), fontFamily: 'MaterialIcons');
+  static IconData iconFromString(String hex) {
+    // ignore: non_const_argument_for_const_parameter
+    return IconData(int.parse(hex, radix: 16), fontFamily: 'MaterialIcons');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,8 +114,8 @@ class GoalIconPicker extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isSelected
-                      ? AppTheme.primaryPink.withOpacity(0.15)
-                      : Colors.white.withOpacity(0.05),
+                      ? AppTheme.primaryPink.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.05),
                   border: Border.all(
                     color: isSelected
                         ? AppTheme.primaryPink
@@ -135,8 +137,8 @@ class GoalIconPicker extends StatelessWidget {
   }
 }
 
-class _IconOption {
+class GoalIconOption {
   final IconData icon;
   final String label;
-  const _IconOption(this.icon, this.label);
+  const GoalIconOption(this.icon, this.label);
 }

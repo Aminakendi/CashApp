@@ -122,13 +122,13 @@ class GoalDetailScreen extends ConsumerWidget {
               controller: controller,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Amount (KSh)',
-                labelStyle: const TextStyle(color: AppTheme.textSecondary),
-                enabledBorder: const UnderlineInputBorder(
+                labelStyle: TextStyle(color: AppTheme.textSecondary),
+                enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: AppTheme.textDisabled),
                 ),
-                focusedBorder: const UnderlineInputBorder(
+                focusedBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: AppTheme.primaryPink),
                 ),
               ),

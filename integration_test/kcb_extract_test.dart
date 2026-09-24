@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mpesa_tracker/database/database.dart';
@@ -11,7 +12,7 @@ void main() {
         
     for (var r in results) {
       if (r.amount == 8000.0 && r.mpesaSubtype == 'unknown') {
-        print('FOUND KCB TX: id=${r.id}, rawSmsText=${r.rawSmsText}');
+        debugPrint('FOUND KCB TX: id=${r.id}, rawSmsText=${r.rawSmsText}');
       }
     }
   });

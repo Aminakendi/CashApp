@@ -36,6 +36,7 @@ class _CreateGoalSheetState extends ConsumerState<CreateGoalSheet> {
       _selectedDate = goal.targetDate;
       
       if (goal.iconName != null) {
+        // ignore: non_const_argument_for_const_parameter
         _selectedIcon = IconData(int.parse(goal.iconName!, radix: 16), fontFamily: 'MaterialIcons');
         _userHasPickedIcon = true;
       } else {

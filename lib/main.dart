@@ -58,7 +58,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'M-Pesa Tracker',
+      title: 'M-Tracker',
       theme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
       home: const DashboardScreen(),

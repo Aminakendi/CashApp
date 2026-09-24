@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mpesa_tracker/database/database.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -13,8 +14,6 @@ class FakePathProviderPlatform extends Fake
   final String tempPath;
   FakePathProviderPlatform(this.tempPath);
 
-  @override
-  Future<String?> getApplicationDocumentsDirectoryPath() async => tempPath;
 
   @override
   Future<String?> getApplicationDocumentsPath() async => tempPath;
@@ -52,7 +51,7 @@ void main() {
     rawDb.dispose();
 
     final sizeBefore = dbFile.lengthSync();
-    print('Size of app.db before migration: $sizeBefore bytes');
+    debugPrint('Size of app.db before migration: $sizeBefore bytes');
 
     // Trigger migration by opening AppDatabase
     final db = AppDatabase();
@@ -62,11 +61,11 @@ void main() {
     await db.close();
 
     final backupExists = backupFile.existsSync();
-    print('app.db.bak exists: $backupExists');
+    debugPrint('app.db.bak exists: $backupExists');
     
     if (backupExists) {
       final sizeAfter = backupFile.lengthSync();
-      print('Size of app.db.bak: $sizeAfter bytes');
+      debugPrint('Size of app.db.bak: $sizeAfter bytes');
       expect(sizeAfter, greaterThan(0));
     } else {
       fail('Backup file was not created');

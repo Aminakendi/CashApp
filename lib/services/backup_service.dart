@@ -32,6 +32,7 @@ class BackupService {
     
     await file.writeAsString(jsonString);
 
+    // ignore: deprecated_member_use
     await Share.shareXFiles(
       [XFile(file.path)],
       text: 'CashApp Data Export (Unencrypted)',

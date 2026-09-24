@@ -434,7 +434,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 ),
                 onChanged: (v) => setState(() => _searchQuery = v),
               )
-            : const Text('M-Pesa Tracker'),
+            : const Text('M-Tracker'),
         actions: [
           // Search icon: toggles search field
           IconButton(
@@ -843,7 +843,7 @@ class _Chip extends StatelessWidget {
           style: const TextStyle(color: Colors.white, fontSize: 12)),
       deleteIcon: const Icon(Icons.close, size: 14, color: AppTheme.textDisabled),
       onDeleted: onRemove,
-      backgroundColor: AppTheme.primaryPink.withOpacity(0.12),
+      backgroundColor: AppTheme.primaryPink.withValues(alpha: 0.12),
       side: const BorderSide(color: AppTheme.primaryPink, width: 0.5),
       visualDensity: VisualDensity.compact,
     );

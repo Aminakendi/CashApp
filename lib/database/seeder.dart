@@ -124,11 +124,11 @@ class DatabaseSeeder {
     for (final tx in txs) {
       if (tx.mpesaSubtype == 'unknown' && tx.rawSmsText != null && tx.rawSmsText!.toLowerCase().contains('kcb m-pesa')) {
         await (db.update(db.transactions)..where((t) => t.id.equals(tx.id))).write(
-          TransactionsCompanion(
-            type: const drift.Value('transfer'),
-            mpesaSubtype: const drift.Value('kcb'),
-            counterparty: const drift.Value('KCB M-PESA'),
-            categoryId: const drift.Value(null), // Clear category since it's a transfer
+          const TransactionsCompanion(
+            type: drift.Value('transfer'),
+            mpesaSubtype: drift.Value('kcb'),
+            counterparty: drift.Value('KCB M-PESA'),
+            categoryId: drift.Value(null), // Clear category since it's a transfer
           ),
         );
         updatedCount++;

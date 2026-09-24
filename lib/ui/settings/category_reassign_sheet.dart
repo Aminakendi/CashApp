@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpesa_tracker/database/database.dart';
-import 'package:mpesa_tracker/theme/app_theme.dart';
+
 import 'package:mpesa_tracker/ui/settings/category_icon_resolver.dart';
 import 'package:mpesa_tracker/providers/db_provider.dart';
 
@@ -88,7 +88,7 @@ class _CategoryReassignSheetState extends ConsumerState<CategoryReassignSheet> {
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-                value: _selectedCategoryId,
+                initialValue: _selectedCategoryId,
                 hint: const Text('Select a category'),
                 items: otherCategories.map((c) {
                   return DropdownMenuItem<int>(
