@@ -107,6 +107,8 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('PRAGMA foreign_keys = ON');
       },
     );
+  }
+
   Stream<List<AppNotification>> watchNotifications() {
     return (select(appNotifications)
           ..orderBy([(n) => OrderingTerm.desc(n.createdAt)]))

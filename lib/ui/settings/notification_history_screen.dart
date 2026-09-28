@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mpesa_tracker/providers/db_provider.dart';
+import 'package:mpesa_tracker/database/database.dart';
 
 class NotificationHistoryScreen extends ConsumerWidget {
   const NotificationHistoryScreen({super.key});
