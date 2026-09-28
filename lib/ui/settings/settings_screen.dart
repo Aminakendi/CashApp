@@ -4,6 +4,9 @@ import 'package:mpesa_tracker/providers/db_provider.dart';
 import 'package:mpesa_tracker/services/backup_service.dart';
 import 'package:mpesa_tracker/ui/settings/category_management_screen.dart';
 import 'package:mpesa_tracker/ui/settings/notification_history_screen.dart';
+import 'package:mpesa_tracker/ui/settings/security_settings_screen.dart';
+import 'package:mpesa_tracker/providers/app_lock_provider.dart';
+import 'package:mpesa_tracker/services/app_lock_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -83,10 +86,37 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.security),
+            title: const Text('Security'),
+            subtitle: const Text('App Lock and biometrics'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
             leading: const Icon(Icons.download),
             title: const Text('Export Data (JSON)'),
             subtitle: const Text('Save an unencrypted backup of all your data'),
             onTap: () async {
+              final lockService = ref.read(appLockProvider);
+              if (lockService.isEnabled) {
+                final authResult = await lockService.authenticate(reason: 'Authenticate to export data');
+                if (authResult != AuthResult.success) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Authentication required to export data.')),
+                    );
+                  }
+                  return;
+                }
+              }
+              if (!context.mounted) return;
+              
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -107,8 +137,13 @@ class SettingsScreen extends ConsumerWidget {
               );
               
               if (confirmed == true) {
-                final dbInstance = ref.read(dbProvider);
-                await BackupService.exportDataToJson(dbInstance);
+                lockService.setSystemAction(true);
+                try {
+                  final dbInstance = ref.read(dbProvider);
+                  await BackupService.exportDataToJson(dbInstance);
+                } finally {
+                  lockService.setSystemAction(false);
+                }
               }
             },
           ),
