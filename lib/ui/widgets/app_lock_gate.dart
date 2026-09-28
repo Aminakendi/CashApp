@@ -38,26 +38,33 @@ class _AppLockGateState extends ConsumerState<AppLockGate> {
   Widget build(BuildContext context) {
     final lockService = ref.watch(appLockProvider);
     
-    if (lockService.isLocked) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
-              const SizedBox(height: 16),
-              const Text('App Locked', style: TextStyle(fontSize: 24)),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _checkLock,
-                child: const Text('Unlock'),
-              ),
-            ],
-          ),
+    return Stack(
+      children: [
+        Offstage(
+          offstage: lockService.isLocked,
+          child: widget.child,
         ),
-      );
-    }
-
-    return widget.child;
+        if (lockService.isLocked)
+          Positioned.fill(
+            child: Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    const Text('App Locked', style: TextStyle(fontSize: 24)),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: _checkLock,
+                      child: const Text('Unlock'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
