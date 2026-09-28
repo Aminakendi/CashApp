@@ -88,7 +88,7 @@ class _CategoryReassignSheetState extends ConsumerState<CategoryReassignSheet> {
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-                initialValue: _selectedCategoryId,
+                value: _selectedCategoryId,
                 hint: const Text('Select a category'),
                 items: otherCategories.map((c) {
                   return DropdownMenuItem<int>(
