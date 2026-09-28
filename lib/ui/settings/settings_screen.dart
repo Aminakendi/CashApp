@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:mpesa_tracker/providers/db_provider.dart';
 import 'package:mpesa_tracker/services/backup_service.dart';
+import 'package:mpesa_tracker/services/sync_state_service.dart';
 import 'package:mpesa_tracker/ui/settings/category_management_screen.dart';
 import 'package:mpesa_tracker/ui/settings/notification_history_screen.dart';
 import 'package:mpesa_tracker/ui/settings/security_settings_screen.dart';
@@ -9,8 +11,36 @@ import 'package:mpesa_tracker/providers/app_lock_provider.dart';
 import 'package:mpesa_tracker/services/app_lock_service.dart';
 import 'package:mpesa_tracker/theme/app_theme.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late Future<DateTime?> _syncFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncFuture = _getSyncTime();
+  }
+
+  Future<DateTime?> _getSyncTime() async {
+    final status = await Permission.sms.status;
+    if (!status.isGranted) return null;
+    return await SyncStateService.getLastSyncedAt();
+  }
+
+  String _formatRelativeTime(DateTime? timestamp) {
+    if (timestamp == null) return 'Not synced yet';
+    final diff = DateTime.now().difference(timestamp);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inHours < 1) return '${diff.inMinutes} min ago';
+    if (diff.inDays < 1) return '${diff.inHours} hr ago';
+    return '${diff.inDays} days ago';
+  }
 
   String _formatTimeout(int seconds) {
     if (seconds == 0) return 'Immediately';
@@ -59,7 +89,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final db = ref.read(dbProvider);
     final unreadStream = (db.select(db.appNotifications)..where((n) => n.isRead.equals(false))).watch();
     final categoriesStream = db.select(db.categories).watch();
@@ -101,10 +131,32 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Your data stays on this device. No ads. No tracking.',
+                          'Track your M-Pesa transactions at a glance',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Colors.white.withValues(alpha: 0.9),
                           ),
+                        ),
+                        const SizedBox(height: 16),
+                        Divider(color: Colors.white.withValues(alpha: 0.2), height: 1),
+                        const SizedBox(height: 16),
+                        FutureBuilder<DateTime?>(
+                          future: _syncFuture,
+                          builder: (context, syncSnapshot) {
+                            return StreamBuilder<int>(
+                              stream: db.customSelect('SELECT COUNT(*) AS c FROM transactions').watchSingle().map((row) => row.read<int>('c')),
+                              builder: (context, txSnapshot) {
+                                final count = txSnapshot.data ?? 0;
+                                final syncStr = _formatRelativeTime(syncSnapshot.data);
+                                final txStr = count == 1 ? '1 transaction' : '$count transactions';
+                                return Text(
+                                  '$txStr · Last synced $syncStr',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ],
                     ),
