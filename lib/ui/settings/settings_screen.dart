@@ -3,12 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpesa_tracker/providers/db_provider.dart';
 import 'package:mpesa_tracker/services/backup_service.dart';
 import 'package:mpesa_tracker/ui/settings/category_management_screen.dart';
+import 'package:mpesa_tracker/ui/settings/notification_history_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final db = ref.read(dbProvider);
+    final unreadStream = (db.select(db.appNotifications)
+          ..where((n) => n.isRead.equals(false)))
+        .watch();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -24,6 +30,54 @@ class SettingsScreen extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CategoryManagementScreen()),
+              );
+            },
+          ),
+          const Divider(),
+          StreamBuilder(
+            stream: unreadStream,
+            builder: (context, snapshot) {
+              final unreadCount = snapshot.data?.length ?? 0;
+              return ListTile(
+                leading: Stack(
+                  children: [
+                    const Icon(Icons.notifications_outlined),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 12,
+                            minHeight: 12,
+                          ),
+                          child: Text(
+                            '$unreadCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                title: const Text('Notifications'),
+                subtitle: const Text('View history of budget alerts'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationHistoryScreen()),
+                  );
+                },
               );
             },
           ),
