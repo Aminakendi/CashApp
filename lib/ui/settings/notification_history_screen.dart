@@ -77,7 +77,7 @@ class NotificationHistoryScreen extends ConsumerWidget {
           final yesterdayStr = DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 1)));
 
           for (final n in notifications) {
-            final date = DateTime.fromMillisecondsSinceEpoch(n.createdAt * 1000);
+            final date = n.createdAt;
             final dateStr = DateFormat('yyyy-MM-dd').format(date);
             
             String groupKey;
@@ -112,7 +112,7 @@ class NotificationHistoryScreen extends ConsumerWidget {
                     ),
                   ),
                   ...items.map((n) {
-                    final date = DateTime.fromMillisecondsSinceEpoch(n.createdAt * 1000);
+                    final date = n.createdAt;
                     final timeStr = DateFormat('HH:mm').format(date);
                     return ListTile(
                       leading: Icon(
