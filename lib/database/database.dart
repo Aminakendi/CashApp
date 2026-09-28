@@ -15,7 +15,7 @@ import 'category_dao.dart';
 part 'database.g.dart';
 
 @DriftDatabase(
-  tables: [Transactions, Categories, SavingsGoals, CategoryRules, UnparsedMessages, BudgetNotifications],
+  tables: [Transactions, Categories, SavingsGoals, CategoryRules, UnparsedMessages, BudgetNotifications, AppNotifications],
   daos: [AnalyticsDao, CategoryDao],
 )
 class AppDatabase extends _$AppDatabase {
@@ -24,7 +24,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Exposed as a constant so the LazyDatabase factory can read it from a raw
   /// sqlite3 connection (before Drift opens) to decide whether a backup is needed.
-  static const int kSchemaVersion = 5;
+  static const int kSchemaVersion = 6;
 
   @override
   int get schemaVersion => kSchemaVersion;
@@ -99,11 +99,32 @@ class AppDatabase extends _$AppDatabase {
             }
           }
         }
+        if (from < 6) {
+          await m.createTable(appNotifications);
+        }
       },
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
       },
     );
+  Stream<List<AppNotification>> watchNotifications() {
+    return (select(appNotifications)
+          ..orderBy([(n) => OrderingTerm.desc(n.createdAt)]))
+        .watch();
+  }
+
+  Future<void> markNotificationAsRead(int id) {
+    return (update(appNotifications)..where((n) => n.id.equals(id)))
+        .write(const AppNotificationsCompanion(isRead: Value(true)));
+  }
+
+  Future<void> markAllNotificationsAsRead() {
+    return update(appNotifications)
+        .write(const AppNotificationsCompanion(isRead: Value(true)));
+  }
+
+  Future<void> clearNotificationHistory() {
+    return delete(appNotifications).go();
   }
 }
 

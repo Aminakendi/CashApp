@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'database.dart';
 import 'tables.dart';
 import '../services/notification_service.dart';
 
 part 'analytics_dao.g.dart';
 
-@DriftAccessor(tables: [Transactions, Categories, BudgetNotifications])
+@DriftAccessor(tables: [Transactions, Categories, BudgetNotifications, AppNotifications])
 class AnalyticsDao extends DatabaseAccessor<AppDatabase> with _$AnalyticsDaoMixin {
   AnalyticsDao(super.db);
 
@@ -43,8 +45,8 @@ class AnalyticsDao extends DatabaseAccessor<AppDatabase> with _$AnalyticsDaoMixi
     // Check thresholds: we could hit both 80 and 100 in one jump
     final List<int> thresholdsToTrigger = [];
     if (percentage >= 1.0) {
+      thresholdsToTrigger.add(80); // In case it jumped, log 80% first so it's oldest
       thresholdsToTrigger.add(100);
-      thresholdsToTrigger.add(80); // In case it jumped, try to log both
     } else if (percentage >= 0.8) {
       thresholdsToTrigger.add(80);
     }
@@ -59,9 +61,45 @@ class AnalyticsDao extends DatabaseAccessor<AppDatabase> with _$AnalyticsDaoMixi
           ),
         );
         // If insert succeeds, it means we haven't fired this threshold for this category+month.
-        if (isCurrentMonth && !Platform.environment.containsKey('FLUTTER_TEST')) {
-          // The notification uses the threshold percentage to avoid saying '150% of your budget' in an 80% alert.
-          await NotificationService().showBudgetAlert(category.name, threshold / 100.0, spent, category.monthlyBudget!);
+        if (isCurrentMonth) {
+          try {
+            final percentageStr = threshold == 100 ? '100%' : '80%';
+            final title = 'Budget Alert: ${category.name}';
+            
+            final fmt = NumberFormat('#,##0');
+            final spentStr = fmt.format(spent);
+            final budgetStr = fmt.format(category.monthlyBudget!);
+            final body = 'You have reached $percentageStr of your ${category.name} budget. '
+                         'Ksh $spentStr of Ksh $budgetStr spent.';
+            
+            // 1. Write the history row (history snapshot)
+            await into(appNotifications).insert(
+              AppNotificationsCompanion.insert(
+                type: 'budget_threshold',
+                title: title,
+                body: body,
+                categoryId: Value(categoryId),
+              ),
+            );
+            
+            // 2. Prune history: keep only the latest 200 rows by finding the 200th row's ID and deleting older
+            final limitQuery = select(appNotifications)
+              ..orderBy([(n) => OrderingTerm.desc(n.id)])
+              ..limit(1, offset: 199);
+            final limitRow = await limitQuery.getSingleOrNull();
+            if (limitRow != null) {
+              await (delete(appNotifications)..where((n) => n.id.isSmallerThanValue(limitRow.id))).go();
+            }
+          } catch (e) {
+            // Swallow exception so it doesn't propagate into ingestion
+            // Only printing it so it can be seen in logs
+            debugPrint('Failed to write notification history: $e');
+          }
+          
+          if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+            // The notification uses the threshold percentage to avoid saying '150% of your budget' in an 80% alert.
+            await NotificationService().showBudgetAlert(category.name, threshold / 100.0, spent, category.monthlyBudget!);
+          }
         }
       } catch (e) {
         // Unique constraint violation (SqliteException) - we already sent this notification.

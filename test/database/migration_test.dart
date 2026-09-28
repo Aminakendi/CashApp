@@ -287,4 +287,111 @@ void main() {
     await db.close();
     if (dbFile.existsSync()) dbFile.deleteSync();
   });
+  // ── Test 4: v5 → v6 (AppNotifications and idempotency) ─────────────────────
+  test('v5→v6: AppNotifications table is created, existing data survives, and migration is idempotent', () async {
+    final dbFile = File('test_migration_v5_v6.db');
+    if (dbFile.existsSync()) dbFile.deleteSync();
+
+    withRawDb(dbFile.path, (db) {
+      db.execute('PRAGMA user_version = 5;');
+      db.execute('''
+        CREATE TABLE categories (
+          id INTEGER NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          icon TEXT NOT NULL,
+          monthly_budget REAL
+        );
+      ''');
+      db.execute('''
+        CREATE TABLE transactions (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          amount REAL NOT NULL,
+          type TEXT NOT NULL,
+          source TEXT NOT NULL,
+          mpesa_transaction_code TEXT UNIQUE,
+          mpesa_subtype TEXT,
+          counterparty TEXT,
+          category_id INTEGER REFERENCES categories (id),
+          note TEXT,
+          notes2 TEXT,
+          payment_method TEXT NOT NULL,
+          timestamp INTEGER NOT NULL,
+          raw_sms_text TEXT
+        );
+      ''');
+      db.execute('''
+        CREATE TABLE savings_goals (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          target_amount REAL NOT NULL,
+          current_amount REAL NOT NULL DEFAULT 0.0,
+          target_date INTEGER NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+          icon_name TEXT
+        );
+      ''');
+      db.execute('''
+        CREATE TABLE category_rules (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          pattern TEXT NOT NULL,
+          category_id INTEGER NOT NULL REFERENCES categories (id)
+        );
+      ''');
+      db.execute('''
+        CREATE TABLE unparsed_messages (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          raw_sms TEXT NOT NULL,
+          reason TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+      ''');
+      db.execute('''
+        CREATE TABLE budget_notifications (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          category_id INTEGER NOT NULL REFERENCES categories (id),
+          year_month TEXT NOT NULL,
+          threshold INTEGER NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+          UNIQUE (category_id, year_month, threshold)
+        );
+      ''');
+
+      // Insert some data
+      db.execute("INSERT INTO categories (id, name, icon) VALUES (1, 'Food', 'test');");
+      db.execute("INSERT INTO transactions (amount, type, source, payment_method, timestamp, category_id) VALUES (100.0, 'expense', 'manual', 'mpesa', 1234567890, 1);");
+      db.execute("INSERT INTO savings_goals (name, target_amount, target_date, icon_name) VALUES ('Goal', 1000.0, 1234567890, 'e548');");
+      db.execute("INSERT INTO budget_notifications (category_id, year_month, threshold) VALUES (1, '2026-09', 80);");
+    });
+
+    // 1. Run v6 migration normally
+    final db1 = AppDatabase.forTesting(NativeDatabase(dbFile));
+    
+    final txs1 = await db1.select(db1.transactions).get();
+    expect(txs1.length, 1);
+    
+    final notifications1 = await db1.select(db1.budgetNotifications).get();
+    expect(notifications1.length, 1);
+    
+    // Ensure new table is queryable and empty
+    final history1 = await db1.select(db1.appNotifications).get();
+    expect(history1, isEmpty);
+    await db1.close();
+
+    // 2. Test idempotency: Simulate a failed/repeat migration by re-running the migration step manually.
+    // The createTable internally uses `CREATE TABLE IF NOT EXISTS` so it shouldn't crash.
+    final db2 = sqlite3.open(dbFile.path);
+    db2.execute('PRAGMA user_version = 5;'); // force it to re-run
+    db2.dispose();
+
+    final db3 = AppDatabase.forTesting(NativeDatabase(dbFile));
+    
+    final history3 = await db3.select(db3.appNotifications).get();
+    expect(history3, isEmpty);
+    
+    final txs3 = await db3.select(db3.transactions).get();
+    expect(txs3.length, 1); // data still survived
+    
+    await db3.close();
+    if (dbFile.existsSync()) dbFile.deleteSync();
+  });
 }

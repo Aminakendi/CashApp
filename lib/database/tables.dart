@@ -72,3 +72,14 @@ class BudgetNotifications extends Table {
         {categoryId, yearMonth, threshold}
       ];
 }
+
+@DataClassName('AppNotification')
+class AppNotifications extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get type => text()(); // 'budget_threshold'
+  TextColumn get title => text()();
+  TextColumn get body => text()();
+  IntColumn get categoryId => integer().nullable()(); // No FK constraint, category can be deleted safely
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isRead => boolean().withDefault(const Constant(false))();
+}

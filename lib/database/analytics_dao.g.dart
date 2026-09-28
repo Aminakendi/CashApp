@@ -8,6 +8,8 @@ mixin _$AnalyticsDaoMixin on DatabaseAccessor<AppDatabase> {
   $CategoriesTable get categories => attachedDatabase.categories;
   $BudgetNotificationsTable get budgetNotifications =>
       attachedDatabase.budgetNotifications;
+  $AppNotificationsTable get appNotifications =>
+      attachedDatabase.appNotifications;
   AnalyticsDaoManager get managers => AnalyticsDaoManager(this);
 }
 
@@ -21,4 +23,7 @@ class AnalyticsDaoManager {
   $$BudgetNotificationsTableTableManager get budgetNotifications =>
       $$BudgetNotificationsTableTableManager(
           _db.attachedDatabase, _db.budgetNotifications);
+  $$AppNotificationsTableTableManager get appNotifications =>
+      $$AppNotificationsTableTableManager(
+          _db.attachedDatabase, _db.appNotifications);
 }
