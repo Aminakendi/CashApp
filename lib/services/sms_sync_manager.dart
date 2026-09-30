@@ -8,6 +8,7 @@ import '../database/database.dart';
 import 'sms_ingestion_service.dart';
 import 'sms_staging_service.dart';
 import 'sync_state_service.dart';
+import 'notification_service.dart';
 
 /// Top-level background message handler for telephony (Layer 1).
 /// Must be top-level and annotated with @pragma('vm:entry-point') so Flutter AOT doesn't tree-shake it.
@@ -15,6 +16,7 @@ import 'sync_state_service.dart';
 void mpesaBackgroundMessageHandler(tel.SmsMessage message) async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
+    await NotificationService().initializePlugin();
   } catch (e) {
     developer.log('Layer 1 Init Error (MissingPluginException likely): $e', name: 'SmsSyncManager');
     return;
@@ -38,6 +40,7 @@ void mpesaBackgroundMessageHandler(tel.SmsMessage message) async {
 void mpesaWorkmanagerCallbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     WidgetsFlutterBinding.ensureInitialized();
+    await NotificationService().initializePlugin();
     developer.log('Layer 2 WorkManager executing task: $taskName', name: 'SmsSyncManager');
 
     if (taskName == SmsSyncManager.periodicTaskName) {

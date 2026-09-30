@@ -44,7 +44,7 @@ void main() {
     final rawDb = sqlite3.open(dbFile.path);
     // Write fake data so file is not empty
     rawDb.execute('CREATE TABLE categories (id INTEGER PRIMARY KEY, name TEXT NOT NULL, icon TEXT NOT NULL, monthly_budget REAL NULL);');
-    rawDb.execute('INSERT INTO categories (id, name, icon) VALUES (1, "Test", "icon");');
+    rawDb.execute("INSERT INTO categories (id, name, icon) VALUES (1, 'Test', 'icon');");
     rawDb.execute('CREATE TABLE savings_goals (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, target_amount REAL NOT NULL, current_amount REAL NOT NULL DEFAULT 0.0, target_date INTEGER NOT NULL, created_at INTEGER NOT NULL DEFAULT (strftime(\'%s\', \'now\')));');
     rawDb.execute('INSERT INTO savings_goals (name, target_amount, target_date) VALUES (\'Vacation\', 50000.0, 1893456000);');
     rawDb.execute('PRAGMA user_version = 4;');

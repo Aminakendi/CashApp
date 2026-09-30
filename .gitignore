@@ -44,5 +44,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+
 # Widget Preview related
 .widget_preview/
+
+# Debug and UI Automator Output
+logcat*.txt
+window_dump*.xml
+scratch/
+integration_test/

@@ -102,7 +102,11 @@ class AnalyticsDao extends DatabaseAccessor<AppDatabase> with _$AnalyticsDaoMixi
           }
         }
       } catch (e) {
-        // Unique constraint violation (SqliteException) - we already sent this notification.
+        if (e.toString().contains('UNIQUE constraint failed')) {
+          // Unique constraint violation - we already sent this notification for this month.
+        } else {
+          debugPrint('Error triggering budget notification: $e');
+        }
       }
     }
   }
